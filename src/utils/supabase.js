@@ -149,12 +149,12 @@ export const db = {
     }
   },
 
-  async createActivity({ name, url, categoryId }) {
+  async createActivity({ name, url, category_id }) {
     try {
-      console.log('Creating activity...');
+      console.log('Creating activity with:', { name, url, category_id });
       const { data, error } = await supabase
         .from('activities')
-        .insert([{ name, url, category_id: categoryId }])
+        .insert([{ name, url, category_id }])
         .select()
         .single();
       

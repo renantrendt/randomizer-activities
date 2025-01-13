@@ -108,12 +108,18 @@ function MainComponent() {
     setLoading(true);
     setError(null);
     try {
-      console.log("Creating activity:", data);
-      const newActivity = await db.createActivity({
+      if (!data.category_id) {
+        throw new Error('Category ID is required');
+      }
+      
+      const activityData = {
         name: data.name,
         url: data.url,
-        categoryId: data.categoryId
-      });
+        category_id: data.category_id
+      };
+      
+      console.log("Creating activity:", activityData);
+      const newActivity = await db.createActivity(activityData);
       const updatedActivities = [...activities, newActivity];
       console.log("Activity created:", newActivity);
       setActivities(updatedActivities);
@@ -224,13 +230,32 @@ function MainComponent() {
   };
 
   const addActivity = async () => {
-    if (newActivity.name.trim() && newActivity.url.trim() && selectedCategory) {
-      await createActivity({
-        name: newActivity.name.trim(),
-        url: newActivity.url.trim(),
-        categoryId: selectedCategory.id,
-      });
-      setNewActivity({ name: "", url: "" });
+    if (!selectedCategory) {
+      setError("Please select a category first");
+      return;
+    }
+    
+    if (newActivity.name.trim() && newActivity.url.trim()) {
+      try {
+        const activityData = {
+          name: newActivity.name.trim(),
+          url: newActivity.url.trim(),
+          category_id: selectedCategory.id
+        };
+        
+        console.log('Adding activity:', activityData);
+        
+        const result = await createActivity(activityData);
+        
+        if (result) {
+          setNewActivity({ name: "", url: "" });
+          setError(null);
+          console.log('Activity added successfully:', result);
+        }
+      } catch (error) {
+        console.error('Failed to add activity:', error);
+        setError("Failed to add activity. Please try again.");
+      }
     }
   };
 
@@ -252,7 +277,7 @@ function MainComponent() {
       setSelectedCategory(newRandomCategory);
 
       const categoryActivities = activities.filter(
-        (a) => a.categoryId === newRandomCategory.id
+        (a) => a.category_id === newRandomCategory.id
       );
       if (categoryActivities.length > 0) {
         const randomActivityIndex = Math.floor(
@@ -271,7 +296,7 @@ function MainComponent() {
       setSelectedCategory(onlyCategory);
 
       const categoryActivities = activities.filter(
-        (a) => a.categoryId === onlyCategory.id
+        (a) => a.category_id === onlyCategory.id
       );
       if (categoryActivities.length > 0) {
         const randomActivityIndex = Math.floor(
@@ -297,7 +322,7 @@ function MainComponent() {
         id: editingActivity.id,
         name: editingActivityText.name.trim(),
         url: editingActivityText.url.trim(),
-        categoryId: editingActivity.categoryId,
+        category_id: editingActivity.category_id,
       });
       setEditingActivity(null);
     }

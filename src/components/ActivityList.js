@@ -18,6 +18,16 @@ function ActivityList({
 }) {
   return (
     <div>
+      {!selectedCategory && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4">
+          Please select a category first before adding activities
+        </div>
+      )}
+      {selectedCategory && (
+        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
+          Adding activities to category: {selectedCategory.name}
+        </div>
+      )}
       <div className="space-y-2 mb-4">
         <input
           type="text"
@@ -50,7 +60,7 @@ function ActivityList({
         {activities
           .filter((activity) =>
             selectedCategory
-              ? activity.categoryId === selectedCategory.id
+              ? activity.category_id === selectedCategory.id
               : true
           )
           .map((activity) => (
@@ -98,7 +108,7 @@ function ActivityList({
                   <div>
                     <div className="font-bold">
                       {
-                        categories.find((c) => c.id === activity.categoryId)
+                        categories.find((c) => c.id === activity.category_id)
                           ?.name
                       }
                     </div>
