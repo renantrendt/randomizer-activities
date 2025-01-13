@@ -154,7 +154,11 @@ export const db = {
       console.log('Creating activity with:', { name, url, category_id });
       const { data, error } = await supabase
         .from('activities')
-        .insert([{ name, url, category_id }])
+        .insert([{ 
+          name, 
+          url: url || '', 
+          category_id 
+        }])
         .select()
         .single();
       

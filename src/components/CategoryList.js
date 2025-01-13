@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 function CategoryList({ 
   categories, 
@@ -15,24 +15,41 @@ function CategoryList({
   handleDeleteCategory,
   showCategoryActivities
 }) {
+  const [showAddCategory, setShowAddCategory] = useState(false);
+
   return (
     <div>
-      <div className="flex gap-2 mb-4">
-        <input
-          type="text"
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-          onKeyPress={handleCategoryKeyPress}
-          placeholder="Add new category"
-          className="flex-1 border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
+      <div className="flex justify-between items-center mb-4">
+        <div className="font-semibold text-gray-700">
+          Categories
+        </div>
         <button
-          onClick={addCategory}
-          className="bg-blue-500 text-white px-4 rounded hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          onClick={() => setShowAddCategory(!showAddCategory)}
+          className="p-1 hover:bg-gray-100 rounded-full"
+          aria-label="Add category"
         >
-          Add
+          <span className="text-2xl text-blue-500 hover:text-blue-600">+</span>
         </button>
       </div>
+
+      {showAddCategory && (
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            onKeyPress={handleCategoryKeyPress}
+            placeholder="Add new category"
+            className="flex-1 border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          <button
+            onClick={addCategory}
+            className="bg-blue-500 text-white px-4 rounded hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Add
+          </button>
+        </div>
+      )}
       <ul className="space-y-2">
         {categories.map((category) => (
           <li

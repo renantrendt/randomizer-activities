@@ -8,13 +8,16 @@ function MainComponent() {
   const [newCategory, setNewCategory] = useState("");
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingText, setEditingText] = useState("");
-  const [newActivity, setNewActivity] = useState({ name: "", url: "" });
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [randomCategory, setRandomCategory] = useState(null);
   const [lastRandomCategory, setLastRandomCategory] = useState(null);
   const [randomActivity, setRandomActivity] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [editingActivityText, setEditingActivityText] = useState({
+    name: "",
+    url: "",
+  });
+  const [newActivity, setNewActivity] = useState({
     name: "",
     url: "",
   });
@@ -213,11 +216,7 @@ function MainComponent() {
 
   const handleActivityKeyPress = (e) => {
     if (e.key === "Enter") {
-      if (
-        newActivity.name.trim() &&
-        newActivity.url.trim() &&
-        selectedCategory
-      ) {
+      if (newActivity.name.trim() && selectedCategory) {
         addActivity();
       }
     }
@@ -235,11 +234,11 @@ function MainComponent() {
       return;
     }
     
-    if (newActivity.name.trim() && newActivity.url.trim()) {
+    if (newActivity.name.trim()) {
       try {
         const activityData = {
           name: newActivity.name.trim(),
-          url: newActivity.url.trim(),
+          url: newActivity.url ? newActivity.url.trim() : "",
           category_id: selectedCategory.id
         };
         
@@ -254,7 +253,7 @@ function MainComponent() {
         }
       } catch (error) {
         console.error('Failed to add activity:', error);
-        setError("Failed to add activity. Please try again.");
+        setError(error.message || "Failed to add activity. Please try again.");
       }
     }
   };
@@ -411,8 +410,6 @@ function MainComponent() {
             activities={activities}
             categories={categories}
             selectedCategory={selectedCategory}
-            newActivity={newActivity}
-            setNewActivity={setNewActivity}
             addActivity={addActivity}
             handleActivityKeyPress={handleActivityKeyPress}
             editingActivity={editingActivity}
@@ -422,6 +419,8 @@ function MainComponent() {
             saveActivityEdit={saveActivityEdit}
             startEditingActivity={startEditingActivity}
             handleDeleteActivity={handleDeleteActivity}
+            newActivity={newActivity}
+            setNewActivity={setNewActivity}
           />
         )}
       </div>

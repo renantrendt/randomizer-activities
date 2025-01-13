@@ -1,11 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-function ActivityList({
+const ActivityList = ({
   activities,
   categories,
   selectedCategory,
-  newActivity,
-  setNewActivity,
+  onSelectCategory,
   addActivity,
   handleActivityKeyPress,
   editingActivity,
@@ -14,8 +13,13 @@ function ActivityList({
   handleActivityEditKeyPress,
   saveActivityEdit,
   startEditingActivity,
-  handleDeleteActivity
-}) {
+  handleDeleteActivity,
+  newActivity,
+  setNewActivity
+}) => {
+  const [showAddActivity, setShowAddActivity] = useState(false);
+  const [error, setError] = useState("");
+
   return (
     <div>
       {!selectedCategory && (
@@ -24,38 +28,55 @@ function ActivityList({
         </div>
       )}
       {selectedCategory && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
-          Adding activities to category: {selectedCategory.name}
+        <div className="flex justify-between items-center mb-4">
+          <div className="font-semibold text-gray-700">
+            {selectedCategory.name}
+          </div>
+          <button
+            onClick={() => setShowAddActivity(!showAddActivity)}
+            className="p-1 hover:bg-gray-100 rounded-full"
+            aria-label="Add activity"
+          >
+            <span className="text-2xl text-blue-500 hover:text-blue-600">+</span>
+          </button>
         </div>
       )}
-      <div className="space-y-2 mb-4">
-        <input
-          type="text"
-          value={newActivity.name}
-          onChange={(e) =>
-            setNewActivity({ ...newActivity, name: e.target.value })
-          }
-          onKeyPress={handleActivityKeyPress}
-          placeholder="Activity name"
-          className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <input
-          type="url"
-          value={newActivity.url}
-          onChange={(e) =>
-            setNewActivity({ ...newActivity, url: e.target.value })
-          }
-          onKeyPress={handleActivityKeyPress}
-          placeholder="Activity URL"
-          className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        />
-        <button
-          onClick={addActivity}
-          className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Add Activity
-        </button>
-      </div>
+      
+      {showAddActivity && selectedCategory && (
+        <>
+          {error && (
+            <div className="text-red-500 mb-2">{error}</div>
+          )}
+          <div className="space-y-2 mb-4">
+            <input
+              type="text"
+              value={newActivity.name}
+              onChange={(e) =>
+                setNewActivity({ ...newActivity, name: e.target.value })
+              }
+              onKeyPress={handleActivityKeyPress}
+              placeholder="Activity name"
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <input
+              type="url"
+              value={newActivity.url}
+              onChange={(e) =>
+                setNewActivity({ ...newActivity, url: e.target.value })
+              }
+              onKeyPress={handleActivityKeyPress}
+              placeholder="Activity URL (optional)"
+              className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <button
+              onClick={addActivity}
+              className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Add Activity
+            </button>
+          </div>
+        </>
+      )}
       <ul className="space-y-2">
         {activities
           .filter((activity) =>
@@ -79,9 +100,7 @@ function ActivityList({
                         name: e.target.value,
                       })
                     }
-                    onKeyPress={handleActivityEditKeyPress}
-                    className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Activity name"
+                    className="w-full border p-1 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <input
                     type="url"
@@ -92,9 +111,7 @@ function ActivityList({
                         url: e.target.value,
                       })
                     }
-                    onKeyPress={handleActivityEditKeyPress}
-                    className="w-full border p-2 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Activity URL"
+                    className="w-full border p-1 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <button
                     onClick={saveActivityEdit}
@@ -112,14 +129,20 @@ function ActivityList({
                           ?.name
                       }
                     </div>
-                    <a
-                      href={activity.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {activity.name}
-                    </a>
+                    <div className="flex-1">
+                      {activity.url ? (
+                        <a
+                          href={activity.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:text-blue-600"
+                        >
+                          {activity.name}
+                        </a>
+                      ) : (
+                        <span className="text-gray-700">{activity.name}</span>
+                      )}
+                    </div>
                   </div>
                   <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                     <button
