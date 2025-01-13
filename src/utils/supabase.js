@@ -180,7 +180,10 @@ export const db = {
       console.log('Updating activity...');
       const { data, error } = await supabase
         .from('activities')
-        .update({ name, url })
+        .update({ 
+          name, 
+          url: url || '' 
+        })
         .eq('id', id)
         .select()
         .single();

@@ -100,6 +100,7 @@ const ActivityList = ({
                         name: e.target.value,
                       })
                     }
+                    onKeyPress={handleActivityEditKeyPress}
                     className="w-full border p-1 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <input
@@ -111,6 +112,7 @@ const ActivityList = ({
                         url: e.target.value,
                       })
                     }
+                    onKeyPress={handleActivityEditKeyPress}
                     className="w-full border p-1 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   <button

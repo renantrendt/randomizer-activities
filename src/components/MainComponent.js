@@ -224,6 +224,7 @@ function MainComponent() {
 
   const handleActivityEditKeyPress = (e) => {
     if (e.key === "Enter") {
+      e.preventDefault(); // Previne o comportamento padrão do Enter
       saveActivityEdit();
     }
   };
@@ -316,14 +317,19 @@ function MainComponent() {
   };
 
   const saveActivityEdit = async () => {
-    if (editingActivityText.name.trim() && editingActivityText.url.trim()) {
-      await updateActivity({
-        id: editingActivity.id,
-        name: editingActivityText.name.trim(),
-        url: editingActivityText.url.trim(),
-        category_id: editingActivity.category_id,
-      });
-      setEditingActivity(null);
+    if (editingActivityText.name.trim()) {
+      try {
+        await updateActivity({
+          id: editingActivity.id,
+          name: editingActivityText.name.trim(),
+          url: editingActivityText.url ? editingActivityText.url.trim() : ''
+        });
+        setEditingActivity(null);
+        setEditingActivityText({ name: "", url: "" });
+      } catch (error) {
+        console.error('Error saving activity edit:', error);
+        setError('Failed to save activity changes. Please try again.');
+      }
     }
   };
 
