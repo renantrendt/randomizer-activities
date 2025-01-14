@@ -4,24 +4,14 @@ import { supabase } from '../utils/supabase';
 function AuthButton({ isAuthenticated, setIsAuthenticated }) {
   const handleLogin = async () => {
     try {
-      console.log('Starting GitHub login...');
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          skipBrowserRedirect: true,
-          redirectTo: 'https://randomizer-activities.vercel.app'
-        }
+        provider: 'github'
       });
       
       if (error) {
         console.error('Error logging in:', error.message);
         alert('Error logging in. Please try again.');
         return;
-      }
-
-      // Redirect manually to ensure correct URL
-      if (data?.url) {
-        window.location.href = data.url;
       }
 
       console.log('Login response:', data);
