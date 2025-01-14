@@ -33,13 +33,48 @@ function MainComponent() {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Current session:', session); // Debug
-        setIsAuthenticated(!!session);
+        console.log('Current session:', session);
+        
+        if (session?.user) {
+          // Criar perfil de usuário se ainda não existir
+          try {
+            const { error } = await supabase
+              .from('users')
+              .insert([{ id: session.user.id }])
+              .single();
+
+            if (error && error.code !== '23505') { // Ignora erro de duplicação
+              console.error('Error creating user profile:', error);
+            }
+          } catch (err) {
+            console.error('Error creating user profile:', err);
+          }
+          
+          setIsAuthenticated(true);
+        }
 
         // Setup auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          console.log('Auth state changed:', session); // Debug
-          setIsAuthenticated(!!session);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          console.log('Auth state changed:', session);
+          if (session?.user) {
+            // Criar perfil de usuário se ainda não existir
+            try {
+              const { error } = await supabase
+                .from('users')
+                .insert([{ id: session.user.id }])
+                .single();
+
+              if (error && error.code !== '23505') { // Ignora erro de duplicação
+                console.error('Error creating user profile:', error);
+              }
+            } catch (err) {
+              console.error('Error creating user profile:', err);
+            }
+            
+            setIsAuthenticated(true);
+          } else {
+            setIsAuthenticated(false);
+          }
         });
 
         return () => subscription.unsubscribe();
@@ -229,9 +264,34 @@ function MainComponent() {
   };
 
   const addCategory = async () => {
-    if (newCategory.trim()) {
-      await createCategory({ name: newCategory.trim() });
-      setNewCategory("");
+    if (!newCategory.trim()) return;
+    
+    setLoading(true);
+    setError(null);
+    try {
+      console.log("Creating category:", { name: newCategory });
+      const createdCategory = await db.createCategory(newCategory);
+      console.log("Category created:", createdCategory);
+      
+      if (createdCategory) {
+        setCategories([...categories, createdCategory]);
+        setNewCategory("");
+      }
+    } catch (err) {
+      console.error("Error creating category:", err);
+      let errorMessage = "Failed to create category. ";
+      
+      if (err.message === "User not authenticated") {
+        errorMessage += "Please make sure you are logged in.";
+      } else if (err.code === "23503") {
+        errorMessage += "Please try logging out and logging in again.";
+      } else {
+        errorMessage += "Please try again.";
+      }
+      
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
 

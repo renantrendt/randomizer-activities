@@ -44,17 +44,70 @@ export const db = {
 
   async createCategory(name) {
     try {
-      const user = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
+      if (userError) {
+        console.error('Error getting user:', userError);
+        throw userError;
+      }
+
+      if (!user) {
+        console.error('No user found');
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Creating category for user:', user.id);
+      
+      // Primeiro, verificar se o usuário existe na tabela users
+      const { data: userData, error: userCheckError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (userCheckError) {
+        console.error('Error checking user:', userCheckError);
+        throw userCheckError;
+      }
+
+      // Se o usuário não existir, criar
+      if (!userData) {
+        console.log('Creating user profile...');
+        const { error: createUserError } = await supabase
+          .from('users')
+          .insert([{ 
+            id: user.id,
+            email: user.email,
+            created_at: new Date().toISOString()
+          }]);
+
+        if (createUserError) {
+          console.error('Error creating user profile:', createUserError);
+          throw createUserError;
+        }
+        
+        // Verificar se o usuário foi criado
+        const { data: checkData, error: checkError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('id', user.id)
+          .maybeSingle();
+          
+        if (checkError || !checkData) {
+          console.error('User was not created successfully');
+          throw new Error('Failed to create user profile');
+        }
+      }
+
+      // Agora criar a categoria
       console.log('Creating category...');
       const { data, error } = await supabase
         .from('categories')
         .insert([{ 
           name,
-          user_id: user.data?.user?.id || null
+          user_id: user.id
         }])
-        .select()
-        .single();
+        .select();
       
       if (error) {
         console.error('Error creating category:', error);
@@ -62,7 +115,7 @@ export const db = {
       }
       
       console.log('Category created successfully:', data);
-      return data;
+      return data[0];
     } catch (err) {
       console.error('Error in createCategory:', err);
       throw err;
@@ -151,19 +204,55 @@ export const db = {
 
   async createActivity({ name, url, category_id }) {
     try {
-      const user = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      console.log('Creating activity with:', { name, url, category_id });
+      if (userError) {
+        console.error('Error getting user:', userError);
+        throw userError;
+      }
+
+      if (!user) {
+        console.error('No user found');
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Creating activity for user:', user.id);
+      
+      // Primeiro, verificar se o usuário existe na tabela users
+      const { data: userData, error: userCheckError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      if (userCheckError) {
+        console.error('Error checking user:', userCheckError);
+        throw userCheckError;
+      }
+
+      if (!userData) {
+        console.log('Creating user profile...');
+        const { error: createUserError } = await supabase
+          .from('users')
+          .insert([{ id: user.id }]);
+
+        if (createUserError && createUserError.code !== '23505') {
+          console.error('Error creating user profile:', createUserError);
+          throw createUserError;
+        }
+      }
+
+      // Agora criar a atividade
+      console.log('Creating activity...');
       const { data, error } = await supabase
         .from('activities')
         .insert([{ 
-          name, 
-          url: url || '', 
+          name,
+          url,
           category_id,
-          user_id: user.data?.user?.id || null
+          user_id: user.id
         }])
-        .select()
-        .single();
+        .select();
       
       if (error) {
         console.error('Error creating activity:', error);
@@ -171,7 +260,7 @@ export const db = {
       }
       
       console.log('Activity created successfully:', data);
-      return data;
+      return data[0]; // Retorna o primeiro item do array
     } catch (err) {
       console.error('Error in createActivity:', err);
       throw err;
