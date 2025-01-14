@@ -8,6 +8,7 @@ function AuthButton({ isAuthenticated, setIsAuthenticated }) {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'github',
         options: {
+          skipBrowserRedirect: true,
           redirectTo: 'https://randomizer-activities.vercel.app'
         }
       });
@@ -16,6 +17,11 @@ function AuthButton({ isAuthenticated, setIsAuthenticated }) {
         console.error('Error logging in:', error.message);
         alert('Error logging in. Please try again.');
         return;
+      }
+
+      // Redirect manually to ensure correct URL
+      if (data?.url) {
+        window.location.href = data.url;
       }
 
       console.log('Login response:', data);

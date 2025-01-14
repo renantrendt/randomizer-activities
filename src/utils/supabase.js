@@ -18,17 +18,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-// Test the connection
-(async () => {
-  try {
-    const { data, error } = await supabase.from('categories').select('count');
-    if (error) throw error;
-    console.log('Supabase connection test successful');
-  } catch (err) {
-    console.error('Error testing Supabase connection:', err);
-  }
-})();
-
 // Database helper functions
 export const db = {
   // Categories
