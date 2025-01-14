@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../utils/supabase';
+import { db, supabase } from '../utils/supabase';
 import CategoryList from './CategoryList';
 import ActivityList from './ActivityList';
+import AuthButton from './AuthButton';
 
 function MainComponent() {
   const [activeTab, setActiveTab] = useState("categories");
@@ -25,6 +26,7 @@ function MainComponent() {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // Load initial data when component mounts
   useEffect(() => {
@@ -47,6 +49,19 @@ function MainComponent() {
       }
     };
     loadData();
+  }, []);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setIsAuthenticated(!!session);
+
+      // Escutar mudanças na autenticação
+      supabase.auth.onAuthStateChange((_event, session) => {
+        setIsAuthenticated(!!session);
+      });
+    };
+    checkAuth();
   }, []);
 
   const createCategory = async (data) => {
@@ -339,96 +354,105 @@ function MainComponent() {
   };
 
   return (
-    <div>
-      <div className="p-4 max-w-4xl mx-auto">
-        {loading && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-          </div>
-        )}
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
-            {error}
-          </div>
-        )}
-        <div className="mb-8">
-          <button
-            onClick={getRandomCategory}
-            className="w-full bg-pink-500 text-black py-3 px-6 rounded-lg mb-4 hover:bg-yellow-400"
-            disabled={loading}
-          >
-            Give me the next activity
-          </button>
-          {randomActivity && (
-            <div className="text-center text-lg font-semibold text-gray-700 bg-gray-100 p-3 rounded-lg">
-              <a
-                href={randomActivity.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 hover:underline"
-              >
-                {randomActivity.name}
-              </a>
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Randomizer Activities</h1>
+        <AuthButton 
+          isAuthenticated={isAuthenticated} 
+          setIsAuthenticated={setIsAuthenticated} 
+        />
+      </div>
+      <div>
+        <div className="p-4 max-w-4xl mx-auto">
+          {loading && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
             </div>
           )}
-        </div>
-        <div className="flex gap-4 mb-4">
-          <button
-            onClick={() => setActiveTab("categories")}
-            className={`flex-1 py-2 px-4 rounded ${
-              activeTab === "categories" ? "bg-gray-200" : "bg-gray-100"
-            }`}
-            disabled={loading}
-          >
-            Categories
-          </button>
-          <button
-            onClick={() => setActiveTab("activities")}
-            className={`flex-1 py-2 px-4 rounded ${
-              activeTab === "activities" ? "bg-gray-200" : "bg-gray-100"
-            }`}
-            disabled={loading}
-          >
-            Activities
-          </button>
-        </div>
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+              {error}
+            </div>
+          )}
+          <div className="mb-8">
+            <button
+              onClick={getRandomCategory}
+              className="w-full bg-pink-500 text-black py-3 px-6 rounded-lg mb-4 hover:bg-yellow-400"
+              disabled={loading}
+            >
+              Give me the next activity
+            </button>
+            {randomActivity && (
+              <div className="text-center text-lg font-semibold text-gray-700 bg-gray-100 p-3 rounded-lg">
+                <a
+                  href={randomActivity.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {randomActivity.name}
+                </a>
+              </div>
+            )}
+          </div>
+          <div className="flex gap-4 mb-4">
+            <button
+              onClick={() => setActiveTab("categories")}
+              className={`flex-1 py-2 px-4 rounded ${
+                activeTab === "categories" ? "bg-gray-200" : "bg-gray-100"
+              }`}
+              disabled={loading}
+            >
+              Categories
+            </button>
+            <button
+              onClick={() => setActiveTab("activities")}
+              className={`flex-1 py-2 px-4 rounded ${
+                activeTab === "activities" ? "bg-gray-200" : "bg-gray-100"
+              }`}
+              disabled={loading}
+            >
+              Activities
+            </button>
+          </div>
 
-        {activeTab === "categories" && (
-          <CategoryList
-            categories={categories}
-            newCategory={newCategory}
-            setNewCategory={setNewCategory}
-            addCategory={addCategory}
-            handleCategoryKeyPress={handleCategoryKeyPress}
-            editingCategory={editingCategory}
-            editingText={editingText}
-            setEditingText={setEditingText}
-            handleEditKeyPress={handleEditKeyPress}
-            saveEdit={saveEdit}
-            startEditing={startEditing}
-            handleDeleteCategory={handleDeleteCategory}
-            showCategoryActivities={showCategoryActivities}
-          />
-        )}
+          {activeTab === "categories" && (
+            <CategoryList
+              categories={categories}
+              newCategory={newCategory}
+              setNewCategory={setNewCategory}
+              addCategory={addCategory}
+              handleCategoryKeyPress={handleCategoryKeyPress}
+              editingCategory={editingCategory}
+              editingText={editingText}
+              setEditingText={setEditingText}
+              handleEditKeyPress={handleEditKeyPress}
+              saveEdit={saveEdit}
+              startEditing={startEditing}
+              handleDeleteCategory={handleDeleteCategory}
+              showCategoryActivities={showCategoryActivities}
+            />
+          )}
 
-        {activeTab === "activities" && (
-          <ActivityList
-            activities={activities}
-            categories={categories}
-            selectedCategory={selectedCategory}
-            addActivity={addActivity}
-            handleActivityKeyPress={handleActivityKeyPress}
-            editingActivity={editingActivity}
-            editingActivityText={editingActivityText}
-            setEditingActivityText={setEditingActivityText}
-            handleActivityEditKeyPress={handleActivityEditKeyPress}
-            saveActivityEdit={saveActivityEdit}
-            startEditingActivity={startEditingActivity}
-            handleDeleteActivity={handleDeleteActivity}
-            newActivity={newActivity}
-            setNewActivity={setNewActivity}
-          />
-        )}
+          {activeTab === "activities" && (
+            <ActivityList
+              activities={activities}
+              categories={categories}
+              selectedCategory={selectedCategory}
+              addActivity={addActivity}
+              handleActivityKeyPress={handleActivityKeyPress}
+              editingActivity={editingActivity}
+              editingActivityText={editingActivityText}
+              setEditingActivityText={setEditingActivityText}
+              handleActivityEditKeyPress={handleActivityEditKeyPress}
+              saveActivityEdit={saveActivityEdit}
+              startEditingActivity={startEditingActivity}
+              handleDeleteActivity={handleDeleteActivity}
+              newActivity={newActivity}
+              setNewActivity={setNewActivity}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
