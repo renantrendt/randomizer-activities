@@ -35,13 +35,11 @@ function MainComponent() {
         const { data: { session } } = await supabase.auth.getSession();
         console.log('Current session:', session);
         setIsAuthenticated(!!session?.user);
-        loadData(); // Carregar dados iniciais
 
         // Setup auth state listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           console.log('Auth state changed:', session);
           setIsAuthenticated(!!session?.user);
-          loadData(); // Recarregar dados quando o estado de auth mudar
         });
 
         return () => subscription.unsubscribe();
@@ -54,29 +52,56 @@ function MainComponent() {
     checkAuth();
   }, []);
 
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log("Loading initial data...");
-      const categoriesData = await db.getCategories();
-      const activitiesData = await db.getActivities();
-      console.log("Loaded categories:", categoriesData);
-      console.log("Loaded activities:", activitiesData);
-      setCategories(categoriesData);
-      setActivities(activitiesData);
-    } catch (err) {
-      console.error("Error loading data:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Separate useEffect for loading data
+  useEffect(() => {
+    const loadData = async () => {
+      if (loading) return; // Prevent multiple simultaneous loads
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        console.log("Loading initial data...");
+        const categoriesData = await db.getCategories();
+        const activitiesData = await db.getActivities();
+        console.log("Loaded categories:", categoriesData);
+        console.log("Loaded activities:", activitiesData);
+        setCategories(categoriesData || []);
+        setActivities(activitiesData || []);
+      } catch (err) {
+        console.error("Error loading data:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [isAuthenticated]); // Reload when auth state changes
 
   const handleHideCategory = async (category) => {
     try {
       await db.hideCategory(category.id);
       // Atualizar a lista de categorias após esconder
+      const loadData = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          console.log("Loading initial data...");
+          const categoriesData = await db.getCategories();
+          const activitiesData = await db.getActivities();
+          console.log("Loaded categories:", categoriesData);
+          console.log("Loaded activities:", activitiesData);
+          setCategories(categoriesData || []);
+          setActivities(activitiesData || []);
+        } catch (err) {
+          console.error("Error loading data:", err);
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
       loadData();
     } catch (err) {
       console.error('Error hiding category:', err);
