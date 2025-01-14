@@ -23,7 +23,7 @@ const ActivityList = ({
 
   return (
     <div>
-      {!selectedCategory && (
+      {!selectedCategory && isAuthenticated && (
         <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4">
           Please select a category first before adding activities
         </div>
