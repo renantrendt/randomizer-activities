@@ -14,7 +14,7 @@ export const db = {
   // Categories
   async getCategories() {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       
       console.log('Fetching categories...');
       let query = supabase
@@ -24,8 +24,8 @@ export const db = {
 
       if (user) {
         // Se usuário está logado:
-        // - Pegar todas as categorias públicas
-        // - Mais as categorias privadas do usuário
+        // - Pegar categorias públicas
+        // - Mais as categorias do usuário
         // - Menos as categorias que o usuário escondeu
         query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
         
@@ -191,12 +191,24 @@ export const db = {
 
   async hideCategory(categoryId) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (userError || !user) {
+      if (!user) {
         throw new Error('User not authenticated');
       }
 
+      // Verificar se a categoria existe e é pública
+      const { data: category } = await supabase
+        .from('categories')
+        .select('is_public')
+        .eq('id', categoryId)
+        .single();
+
+      if (!category?.is_public) {
+        throw new Error('Category not found or is not public');
+      }
+
+      // Adicionar à tabela hidden_categories
       const { error } = await supabase
         .from('hidden_categories')
         .insert([{
@@ -216,19 +228,17 @@ export const db = {
 
   async unhideCategory(categoryId) {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (userError || !user) {
+      if (!user) {
         throw new Error('User not authenticated');
       }
 
+      // Remover da tabela hidden_categories
       const { error } = await supabase
         .from('hidden_categories')
         .delete()
-        .match({
-          user_id: user.id,
-          category_id: categoryId
-        });
+        .match({ user_id: user.id, category_id: categoryId });
 
       if (error) {
         console.error('Error unhiding category:', error);
