@@ -8,6 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 console.log('Initializing Supabase client with URL:', supabaseUrl);
+console.log('Anon key present:', !!supabaseAnonKey);
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -20,14 +21,11 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 // Test the connection
 (async () => {
   try {
-    const { data, error } = await supabase.from('categories').select('count(*)');
-    if (error) {
-      console.error('Error testing Supabase connection:', error);
-    } else {
-      console.log('Successfully connected to Supabase');
-    }
+    const { data, error } = await supabase.from('categories').select('count');
+    if (error) throw error;
+    console.log('Supabase connection test successful');
   } catch (err) {
-    console.error('Error initializing Supabase:', err);
+    console.error('Error testing Supabase connection:', err);
   }
 })();
 
