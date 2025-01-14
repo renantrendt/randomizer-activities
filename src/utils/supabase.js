@@ -14,17 +14,35 @@ export const db = {
   // Categories
   async getCategories() {
     try {
-      const user = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       console.log('Fetching categories...');
-      const query = supabase
+      let query = supabase
         .from('categories')
         .select('*')
         .order('name');
 
-      // Se usuário estiver logado, filtrar por user_id
-      if (user.data?.user) {
-        query.or(`user_id.is.null,user_id.eq.${user.data.user.id}`);
+      if (user) {
+        // Se usuário está logado:
+        // - Pegar todas as categorias públicas
+        // - Mais as categorias privadas do usuário
+        // - Menos as categorias que o usuário escondeu
+        query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
+        
+        // Buscar categorias ocultas do usuário
+        const { data: hiddenCategories } = await supabase
+          .from('hidden_categories')
+          .select('category_id')
+          .eq('user_id', user.id);
+        
+        // Excluir categorias ocultas
+        if (hiddenCategories?.length > 0) {
+          const hiddenIds = hiddenCategories.map(h => h.category_id);
+          query = query.not('id', 'in', `(${hiddenIds.join(',')})`);
+        }
+      } else {
+        // Se usuário não está logado, mostrar apenas categorias públicas
+        query = query.eq('is_public', true);
       }
       
       const { data, error } = await query;
@@ -171,20 +189,95 @@ export const db = {
     }
   },
 
+  async hideCategory(categoryId) {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('hidden_categories')
+        .insert([{
+          user_id: user.id,
+          category_id: categoryId
+        }]);
+
+      if (error) {
+        console.error('Error hiding category:', error);
+        throw error;
+      }
+    } catch (err) {
+      console.error('Error in hideCategory:', err);
+      throw err;
+    }
+  },
+
+  async unhideCategory(categoryId) {
+    try {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('hidden_categories')
+        .delete()
+        .match({
+          user_id: user.id,
+          category_id: categoryId
+        });
+
+      if (error) {
+        console.error('Error unhiding category:', error);
+        throw error;
+      }
+    } catch (err) {
+      console.error('Error in unhideCategory:', err);
+      throw err;
+    }
+  },
+
   // Activities
   async getActivities() {
     try {
-      const user = await supabase.auth.getUser();
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
       console.log('Fetching activities...');
-      const query = supabase
+      let query = supabase
         .from('activities')
-        .select('*')
+        .select(`
+          *,
+          categories!inner (
+            id,
+            is_public
+          )
+        `)
         .order('name');
 
-      // Se usuário estiver logado, filtrar por user_id
-      if (user.data?.user) {
-        query.or(`user_id.is.null,user_id.eq.${user.data.user.id}`);
+      if (user) {
+        // Se usuário está logado:
+        // - Pegar atividades de categorias públicas
+        // - Mais as atividades de categorias do usuário
+        // - Menos as atividades de categorias que o usuário escondeu
+        query = query.or(`categories.is_public.eq.true,user_id.eq.${user.id}`);
+        
+        // Buscar categorias ocultas do usuário
+        const { data: hiddenCategories } = await supabase
+          .from('hidden_categories')
+          .select('category_id')
+          .eq('user_id', user.id);
+        
+        // Excluir atividades de categorias ocultas
+        if (hiddenCategories?.length > 0) {
+          const hiddenIds = hiddenCategories.map(h => h.category_id);
+          query = query.not('category_id', 'in', `(${hiddenIds.join(',')})`);
+        }
+      } else {
+        // Se usuário não está logado, mostrar apenas atividades de categorias públicas
+        query = query.eq('categories.is_public', true);
       }
       
       const { data, error } = await query;
@@ -206,43 +299,31 @@ export const db = {
     try {
       const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      if (userError) {
-        console.error('Error getting user:', userError);
-        throw userError;
-      }
-
-      if (!user) {
-        console.error('No user found');
+      if (userError || !user) {
         throw new Error('User not authenticated');
       }
 
-      console.log('Creating activity for user:', user.id);
-      
-      // Primeiro, verificar se o usuário existe na tabela users
-      const { data: userData, error: userCheckError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('id', user.id)
-        .maybeSingle();
+      // Verificar se a categoria existe e se o usuário tem permissão
+      const { data: category, error: categoryError } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('id', category_id)
+        .single();
 
-      if (userCheckError) {
-        console.error('Error checking user:', userCheckError);
-        throw userCheckError;
+      if (categoryError) {
+        console.error('Error checking category:', categoryError);
+        throw categoryError;
       }
 
-      if (!userData) {
-        console.log('Creating user profile...');
-        const { error: createUserError } = await supabase
-          .from('users')
-          .insert([{ id: user.id }]);
-
-        if (createUserError && createUserError.code !== '23505') {
-          console.error('Error creating user profile:', createUserError);
-          throw createUserError;
-        }
+      if (!category) {
+        throw new Error('Category not found');
       }
 
-      // Agora criar a atividade
+      if (!category.is_public && category.user_id !== user.id) {
+        throw new Error('You do not have permission to add activities to this category');
+      }
+
+      // Criar a atividade
       console.log('Creating activity...');
       const { data, error } = await supabase
         .from('activities')
@@ -260,7 +341,7 @@ export const db = {
       }
       
       console.log('Activity created successfully:', data);
-      return data[0]; // Retorna o primeiro item do array
+      return data[0];
     } catch (err) {
       console.error('Error in createActivity:', err);
       throw err;

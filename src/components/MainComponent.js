@@ -34,46 +34,16 @@ function MainComponent() {
       try {
         const { data: { session } } = await supabase.auth.getSession();
         console.log('Current session:', session);
-        
-        if (session?.user) {
-          // Criar perfil de usuário se ainda não existir
-          try {
-            const { error } = await supabase
-              .from('users')
-              .insert([{ id: session.user.id }])
-              .single();
-
-            if (error && error.code !== '23505') { // Ignora erro de duplicação
-              console.error('Error creating user profile:', error);
-            }
-          } catch (err) {
-            console.error('Error creating user profile:', err);
-          }
-          
-          setIsAuthenticated(true);
-        }
+        setIsAuthenticated(!!session?.user);
 
         // Setup auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           console.log('Auth state changed:', session);
+          setIsAuthenticated(!!session?.user);
           if (session?.user) {
-            // Criar perfil de usuário se ainda não existir
-            try {
-              const { error } = await supabase
-                .from('users')
-                .insert([{ id: session.user.id }])
-                .single();
-
-              if (error && error.code !== '23505') { // Ignora erro de duplicação
-                console.error('Error creating user profile:', error);
-              }
-            } catch (err) {
-              console.error('Error creating user profile:', err);
-            }
-            
-            setIsAuthenticated(true);
+            loadData(); // Recarregar dados quando usuário fizer login
           } else {
-            setIsAuthenticated(false);
+            loadData(); // Recarregar dados quando usuário fizer logout (para mostrar apenas públicas)
           }
         });
 
@@ -88,26 +58,38 @@ function MainComponent() {
 
   // Load initial data when component mounts
   useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        console.log("Loading initial data...");
-        const categoriesData = await db.getCategories();
-        const activitiesData = await db.getActivities();
-        console.log("Loaded categories:", categoriesData);
-        console.log("Loaded activities:", activitiesData);
-        setCategories(categoriesData);
-        setActivities(activitiesData);
-      } catch (err) {
-        console.error("Error loading data:", err);
-        setError("Failed to load data. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log("Loading initial data...");
+      const categoriesData = await db.getCategories();
+      const activitiesData = await db.getActivities();
+      console.log("Loaded categories:", categoriesData);
+      console.log("Loaded activities:", activitiesData);
+      setCategories(categoriesData);
+      setActivities(activitiesData);
+    } catch (err) {
+      console.error("Error loading data:", err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleHideCategory = async (category) => {
+    try {
+      await db.hideCategory(category.id);
+      // Atualizar a lista de categorias após esconder
+      loadData();
+    } catch (err) {
+      console.error('Error hiding category:', err);
+      setError('Failed to hide category. Please try again.');
+    }
+  };
 
   const createCategory = async (data) => {
     setLoading(true);
@@ -502,6 +484,7 @@ function MainComponent() {
               handleDeleteCategory={handleDeleteCategory}
               showCategoryActivities={showCategoryActivities}
               isAuthenticated={isAuthenticated}
+              onHideCategory={handleHideCategory}
             />
           )}
 
