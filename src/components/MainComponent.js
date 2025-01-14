@@ -33,10 +33,12 @@ function MainComponent() {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('Current session:', session); // Debug
         setIsAuthenticated(!!session);
 
         // Setup auth state listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          console.log('Auth state changed:', session); // Debug
           setIsAuthenticated(!!session);
         });
 
@@ -439,6 +441,7 @@ function MainComponent() {
               startEditing={startEditing}
               handleDeleteCategory={handleDeleteCategory}
               showCategoryActivities={showCategoryActivities}
+              isAuthenticated={isAuthenticated}
             />
           )}
 
@@ -458,6 +461,7 @@ function MainComponent() {
               handleDeleteActivity={handleDeleteActivity}
               newActivity={newActivity}
               setNewActivity={setNewActivity}
+              isAuthenticated={isAuthenticated}
             />
           )}
         </div>
