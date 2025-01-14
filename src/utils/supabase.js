@@ -14,11 +14,20 @@ export const db = {
   // Categories
   async getCategories() {
     try {
+      const user = await supabase.auth.getUser();
+      
       console.log('Fetching categories...');
-      const { data, error } = await supabase
+      const query = supabase
         .from('categories')
         .select('*')
         .order('name');
+
+      // Se usuário estiver logado, filtrar por user_id
+      if (user.data?.user) {
+        query.or(`user_id.is.null,user_id.eq.${user.data.user.id}`);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching categories:', error);
@@ -35,10 +44,15 @@ export const db = {
 
   async createCategory(name) {
     try {
+      const user = await supabase.auth.getUser();
+      
       console.log('Creating category...');
       const { data, error } = await supabase
         .from('categories')
-        .insert([{ name }])
+        .insert([{ 
+          name,
+          user_id: user.data?.user?.id || null
+        }])
         .select()
         .single();
       
@@ -57,11 +71,14 @@ export const db = {
 
   async updateCategory(id, name) {
     try {
+      const user = await supabase.auth.getUser();
+      
       console.log('Updating category...');
       const { data, error } = await supabase
         .from('categories')
         .update({ name })
         .eq('id', id)
+        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`)
         .select()
         .single();
       
@@ -80,11 +97,14 @@ export const db = {
 
   async deleteCategory(id) {
     try {
+      const user = await supabase.auth.getUser();
+      
       console.log('Deleting category...');
       const { error } = await supabase
         .from('categories')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`);
       
       if (error) {
         console.error('Error deleting category:', error);
@@ -101,11 +121,20 @@ export const db = {
   // Activities
   async getActivities() {
     try {
+      const user = await supabase.auth.getUser();
+      
       console.log('Fetching activities...');
-      const { data, error } = await supabase
+      const query = supabase
         .from('activities')
         .select('*')
         .order('name');
+
+      // Se usuário estiver logado, filtrar por user_id
+      if (user.data?.user) {
+        query.or(`user_id.is.null,user_id.eq.${user.data.user.id}`);
+      }
+      
+      const { data, error } = await query;
       
       if (error) {
         console.error('Error fetching activities:', error);
@@ -122,13 +151,16 @@ export const db = {
 
   async createActivity({ name, url, category_id }) {
     try {
+      const user = await supabase.auth.getUser();
+      
       console.log('Creating activity with:', { name, url, category_id });
       const { data, error } = await supabase
         .from('activities')
         .insert([{ 
           name, 
           url: url || '', 
-          category_id 
+          category_id,
+          user_id: user.data?.user?.id || null
         }])
         .select()
         .single();
@@ -148,6 +180,8 @@ export const db = {
 
   async updateActivity({ id, name, url }) {
     try {
+      const user = await supabase.auth.getUser();
+      
       console.log('Updating activity...');
       const { data, error } = await supabase
         .from('activities')
@@ -156,6 +190,7 @@ export const db = {
           url: url || '' 
         })
         .eq('id', id)
+        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`)
         .select()
         .single();
       
@@ -174,11 +209,14 @@ export const db = {
 
   async deleteActivity(id) {
     try {
+      const user = await supabase.auth.getUser();
+      
       console.log('Deleting activity...');
       const { error } = await supabase
         .from('activities')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`);
       
       if (error) {
         console.error('Error deleting activity:', error);
