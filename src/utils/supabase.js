@@ -27,7 +27,10 @@ export const db = {
         // - Pegar categorias públicas
         // - Mais as categorias do usuário
         // - Menos as categorias que o usuário escondeu
-        query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
+        query = query.or([
+          { is_public: true },
+          { user_id: user.id }
+        ]);
         
         // Buscar categorias ocultas do usuário
         const { data: hiddenCategories } = await supabase
@@ -149,7 +152,10 @@ export const db = {
         .from('categories')
         .update({ name })
         .eq('id', id)
-        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`)
+        .or([
+          { user_id: null },
+          { user_id: user.data?.user?.id }
+        ])
         .select()
         .single();
       
@@ -175,7 +181,10 @@ export const db = {
         .from('categories')
         .delete()
         .eq('id', id)
-        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`);
+        .or([
+          { user_id: null },
+          { user_id: user.data?.user?.id }
+        ]);
       
       if (error) {
         console.error('Error deleting category:', error);
