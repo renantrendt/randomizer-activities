@@ -30,20 +30,20 @@ const ActivityList = ({
       )}
       {selectedCategory && (
         <div className="flex justify-between items-center mb-4">
-          <div className="font-semibold text-gray-700">
-            {selectedCategory.name}
-          </div>
-          <button
-            onClick={() => setShowAddActivity(!showAddActivity)}
-            className="p-1 hover:bg-gray-100 rounded-full"
-            aria-label="Add activity"
-          >
-            <span className="text-2xl text-blue-500 hover:text-blue-600">+</span>
-          </button>
+          <div className="font-semibold text-gray-700">{selectedCategory.name}</div>
+          {isAuthenticated && (
+            <button
+              onClick={() => setShowAddActivity(!showAddActivity)}
+              className="p-1 hover:bg-gray-100 rounded-full"
+              aria-label="Add activity"
+            >
+              <span className="text-2xl text-blue-500 hover:text-blue-600">+</span>
+            </button>
+          )}
         </div>
       )}
       
-      {showAddActivity && selectedCategory && (
+      {isAuthenticated && showAddActivity && selectedCategory && (
         <>
           {error && (
             <div className="text-red-500 mb-2">{error}</div>

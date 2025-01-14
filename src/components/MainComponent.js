@@ -28,6 +28,27 @@ function MainComponent() {
   const [error, setError] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Check initial auth state
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setIsAuthenticated(!!session);
+
+        // Setup auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          setIsAuthenticated(!!session);
+        });
+
+        return () => subscription.unsubscribe();
+      } catch (err) {
+        console.error('Error checking auth state:', err);
+      }
+    };
+    
+    checkAuth();
+  }, []);
+
   // Load initial data when component mounts
   useEffect(() => {
     const loadData = async () => {
@@ -49,19 +70,6 @@ function MainComponent() {
       }
     };
     loadData();
-  }, []);
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setIsAuthenticated(!!session);
-
-      // Escutar mudanças na autenticação
-      supabase.auth.onAuthStateChange((_event, session) => {
-        setIsAuthenticated(!!session);
-      });
-    };
-    checkAuth();
   }, []);
 
   const createCategory = async (data) => {

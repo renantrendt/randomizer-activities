@@ -3,16 +3,40 @@ import { supabase } from '../utils/supabase';
 
 function AuthButton({ isAuthenticated, setIsAuthenticated }) {
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'github',
-    });
-    if (error) console.error('Error logging in:', error.message);
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'github',
+        options: {
+          redirectTo: window.location.origin
+        }
+      });
+      
+      if (error) {
+        console.error('Error logging in:', error.message);
+        alert('Error logging in. Please try again.');
+        return;
+      }
+
+      console.log('Login successful:', data);
+    } catch (err) {
+      console.error('Error during login:', err);
+      alert('Error logging in. Please try again.');
+    }
   };
 
   const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) console.error('Error logging out:', error.message);
-    setIsAuthenticated(false);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error('Error logging out:', error.message);
+        alert('Error logging out. Please try again.');
+        return;
+      }
+      setIsAuthenticated(false);
+    } catch (err) {
+      console.error('Error during logout:', err);
+      alert('Error logging out. Please try again.');
+    }
   };
 
   return (

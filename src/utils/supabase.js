@@ -9,20 +9,13 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 console.log('Initializing Supabase client with URL:', supabaseUrl);
 
-const options = {
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true
-  },
-  global: {
-    headers: {
-      'Authorization': `Bearer ${supabaseAnonKey}`
-    }
   }
-};
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, options);
+});
 
 // Test the connection
 (async () => {
