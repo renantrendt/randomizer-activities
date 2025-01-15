@@ -15,51 +15,29 @@ export const db = {
   async getCategories() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      console.log('Current user:', user);
       
-      console.log('Fetching categories...');
-      let query = supabase
-        .from('categories')
-        .select('*')
-        .order('name');
+      let query = supabase.from('categories').select('*');
 
       if (user) {
-        // Se usuário está logado:
-        // - Pegar categorias públicas
-        // - Mais as categorias do usuário
-        // - Menos as categorias que o usuário escondeu
-        query = query.or([
-          { is_public: true },
-          { user_id: user.id }
-        ]);
-        
-        // Buscar categorias ocultas do usuário
-        const { data: hiddenCategories } = await supabase
-          .from('hidden_categories')
-          .select('category_id')
-          .eq('user_id', user.id);
-        
-        // Excluir categorias ocultas
-        if (hiddenCategories?.length > 0) {
-          const hiddenIds = hiddenCategories.map(h => h.category_id);
-          query = query.not('id', 'in', `(${hiddenIds.join(',')})`);
-        }
+        // Se usuário está logado, buscar categorias públicas e do usuário
+        query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
       } else {
-        // Se usuário não está logado, mostrar apenas categorias públicas
+        // Se não está logado, mostrar apenas categorias públicas
         query = query.eq('is_public', true);
       }
-      
-      const { data, error } = await query;
+
+      const { data, error } = await query.order('name');
       
       if (error) {
         console.error('Error fetching categories:', error);
-        throw error;
+        return [];
       }
-      
-      console.log('Categories fetched successfully:', data);
-      return data;
+
+      return data || [];
     } catch (err) {
       console.error('Error in getCategories:', err);
-      throw err;
+      return [];
     }
   },
 
