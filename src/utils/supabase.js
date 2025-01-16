@@ -13,27 +13,36 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const db = {
   // Categories
   async getCategories() {
-    const user = await supabase.auth.getUser();
-    console.log('Current user:', user);
-    
-    console.log('Fetching categories...');
-    let query = supabase
-      .from('categories')
-      .select('*');
+    try {
+      const user = await supabase.auth.getUser();
+      console.log('Current user:', user);
+      
+      console.log('Fetching categories...');
+      let query = supabase
+        .from('categories')
+        .select('*');
 
-    if (user.data?.user) {
-      // Se logado, busca itens públicos OU do usuário
-      query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
-    } else {
-      // Se não logado, busca apenas itens públicos
-      query = query.eq('is_public', true);
+      if (user.data?.user) {
+        // Se logado, busca itens públicos OU do usuário
+        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
+      } else {
+        // Se não logado, busca apenas itens públicos
+        query = query.eq('is_public', true);
+      }
+      
+      const { data, error } = await query.order('name');
+      
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+
+      console.log('Categories fetched successfully:', data);
+      return data || [];
+    } catch (error) {
+      console.error('Error in getCategories:', error);
+      throw error;
     }
-    
-    const { data, error } = await query.order('name');
-    console.log('Categories query result:', { data, error });
-    
-    if (error) throw error;
-    return data || [];
   },
 
   async createCategory(name) {
@@ -167,27 +176,36 @@ export const db = {
 
   // Activities
   async getActivities() {
-    const user = await supabase.auth.getUser();
-    console.log('Current user:', user);
-    
-    console.log('Fetching activities...');
-    let query = supabase
-      .from('activities')
-      .select('*');
+    try {
+      const user = await supabase.auth.getUser();
+      console.log('Current user:', user);
+      
+      console.log('Fetching activities...');
+      let query = supabase
+        .from('activities')
+        .select('*');
 
-    if (user.data?.user) {
-      // Se logado, busca itens públicos OU do usuário
-      query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
-    } else {
-      // Se não logado, busca apenas itens públicos
-      query = query.eq('is_public', true);
+      if (user.data?.user) {
+        // Se logado, busca itens públicos OU do usuário
+        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
+      } else {
+        // Se não logado, busca apenas itens públicos
+        query = query.eq('is_public', true);
+      }
+      
+      const { data, error } = await query.order('name');
+      
+      if (error) {
+        console.error('Error fetching activities:', error);
+        throw error;
+      }
+
+      console.log('Activities fetched successfully:', data);
+      return data || [];
+    } catch (error) {
+      console.error('Error in getActivities:', error);
+      throw error;
     }
-    
-    const { data, error } = await query.order('name');
-    console.log('Activities query result:', { data, error });
-    
-    if (error) throw error;
-    return data || [];
   },
 
   async createActivity({ name, url, category_id }) {
