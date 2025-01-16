@@ -18,19 +18,11 @@ export const db = {
       console.log('Current user:', user);
       
       console.log('Fetching categories...');
-      let query = supabase
+      const { data, error } = await supabase
         .from('categories')
-        .select('*');
-
-      if (user.data?.user) {
-        // Se logado, busca itens públicos OU do usuário
-        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
-      } else {
-        // Se não logado, busca apenas itens públicos
-        query = query.eq('is_public', true);
-      }
-      
-      const { data, error } = await query.order('name');
+        .select()
+        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id || 'null'}`)
+        .order('name');
       
       if (error) {
         console.error('Error fetching categories:', error);
@@ -181,19 +173,11 @@ export const db = {
       console.log('Current user:', user);
       
       console.log('Fetching activities...');
-      let query = supabase
+      const { data, error } = await supabase
         .from('activities')
-        .select('*');
-
-      if (user.data?.user) {
-        // Se logado, busca itens públicos OU do usuário
-        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
-      } else {
-        // Se não logado, busca apenas itens públicos
-        query = query.eq('is_public', true);
-      }
-      
-      const { data, error } = await query.order('name');
+        .select()
+        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id || 'null'}`)
+        .order('name');
       
       if (error) {
         console.error('Error fetching activities:', error);
