@@ -24,17 +24,12 @@ export const db = {
 
       // Se usuário estiver logado, filtrar por user_id
       if (user.data?.user) {
-        query.or(`user_id.is.null,user_id.eq.${user.data.user.id}`);
+        query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
       }
       
       const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching categories:', error);
-        throw error;
-      }
-      
-      console.log('Categories fetched successfully:', data);
+
+      if (error) throw error;
       return data;
     } catch (err) {
       console.error('Error in getCategories:', err);
@@ -131,9 +126,7 @@ export const db = {
         .from('categories')
         .update({ name })
         .eq('id', id)
-        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`)
-        .select()
-        .single();
+        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
       
       if (error) {
         console.error('Error updating category:', error);
@@ -157,7 +150,7 @@ export const db = {
         .from('categories')
         .delete()
         .eq('id', id)
-        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`);
+        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
       
       if (error) {
         console.error('Error deleting category:', error);
@@ -184,17 +177,12 @@ export const db = {
 
       // Se usuário estiver logado, filtrar por user_id
       if (user.data?.user) {
-        query.or(`user_id.is.null,user_id.eq.${user.data.user.id}`);
+        query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
       }
       
       const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching activities:', error);
-        throw error;
-      }
-      
-      console.log('Activities fetched successfully:', data);
+
+      if (error) throw error;
       return data;
     } catch (err) {
       console.error('Error in getActivities:', err);
@@ -275,13 +263,11 @@ export const db = {
       const { data, error } = await supabase
         .from('activities')
         .update({ 
-          name, 
+          name: name || '', 
           url: url || '' 
         })
         .eq('id', id)
-        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`)
-        .select()
-        .single();
+        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
       
       if (error) {
         console.error('Error updating activity:', error);
@@ -305,7 +291,7 @@ export const db = {
         .from('activities')
         .delete()
         .eq('id', id)
-        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`);
+        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
       
       if (error) {
         console.error('Error deleting activity:', error);
