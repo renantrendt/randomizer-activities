@@ -18,11 +18,19 @@ export const db = {
       console.log('Current user:', user);
       
       console.log('Fetching categories...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('categories')
-        .select()
-        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id || 'null'}`)
-        .order('name');
+        .select();
+
+      // Se não há usuário, busca apenas públicos
+      if (!user.data?.user) {
+        query = query.eq('is_public', true);
+      } else {
+        // Se há usuário, busca públicos ou do usuário
+        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
+      }
+      
+      const { data, error } = await query.order('name');
       
       if (error) {
         console.error('Error fetching categories:', error);
@@ -173,11 +181,19 @@ export const db = {
       console.log('Current user:', user);
       
       console.log('Fetching activities...');
-      const { data, error } = await supabase
+      let query = supabase
         .from('activities')
-        .select()
-        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id || 'null'}`)
-        .order('name');
+        .select();
+
+      // Se não há usuário, busca apenas públicos
+      if (!user.data?.user) {
+        query = query.eq('is_public', true);
+      } else {
+        // Se há usuário, busca públicos ou do usuário
+        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
+      }
+      
+      const { data, error } = await query.order('name');
       
       if (error) {
         console.error('Error fetching activities:', error);
