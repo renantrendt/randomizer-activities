@@ -14,6 +14,7 @@ export const db = {
   // Categories
   async getCategories() {
     const user = await supabase.auth.getUser();
+    console.log('Current user:', user);
     
     console.log('Fetching categories...');
     const query = supabase
@@ -22,15 +23,22 @@ export const db = {
 
     // Se usuário estiver logado, filtrar por user_id e is_public
     if (user.data?.user) {
+      console.log('User is logged in, adding OR conditions');
       query.or([
         { is_public: { eq: true } },
         { user_id: { eq: user.data.user.id } }
       ]);
+    } else {
+      console.log('User is not logged in, only fetching public items');
+      query.eq('is_public', true);
     }
     
-    const { data: publicData, error: publicError } = await query.order('name');
-
-    if (publicError) throw publicError;
+    query.order('name');
+    
+    const { data, error } = await query;
+    console.log('Categories query result:', { data, error });
+    
+    if (error) throw error;
 
     // Se usuário estiver logado, busca também os itens dele
     let userData = [];
@@ -45,7 +53,7 @@ export const db = {
     }
 
     // Combina os resultados e ordena
-    const allData = [...publicData, ...userData].sort((a, b) => 
+    const allData = [...data, ...userData].sort((a, b) => 
       a.name.localeCompare(b.name)
     );
 
@@ -184,6 +192,7 @@ export const db = {
   // Activities
   async getActivities() {
     const user = await supabase.auth.getUser();
+    console.log('Current user:', user);
     
     console.log('Fetching activities...');
     const query = supabase
@@ -192,15 +201,22 @@ export const db = {
 
     // Se usuário estiver logado, filtrar por user_id e is_public
     if (user.data?.user) {
+      console.log('User is logged in, adding OR conditions');
       query.or([
         { is_public: { eq: true } },
         { user_id: { eq: user.data.user.id } }
       ]);
+    } else {
+      console.log('User is not logged in, only fetching public items');
+      query.eq('is_public', true);
     }
     
-    const { data: publicData, error: publicError } = await query.order('name');
-
-    if (publicError) throw publicError;
+    query.order('name');
+    
+    const { data, error } = await query;
+    console.log('Activities query result:', { data, error });
+    
+    if (error) throw error;
 
     // Se usuário estiver logado, busca também os itens dele
     let userData = [];
@@ -215,7 +231,7 @@ export const db = {
     }
 
     // Combina os resultados e ordena
-    const allData = [...publicData, ...userData].sort((a, b) => 
+    const allData = [...data, ...userData].sort((a, b) => 
       a.name.localeCompare(b.name)
     );
 

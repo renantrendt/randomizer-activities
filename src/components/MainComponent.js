@@ -33,9 +33,10 @@ function MainComponent() {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Current session:', session);
+        console.log('Initial session check:', session);
         
         if (session?.user) {
+          console.log('User is authenticated:', session.user);
           // Criar perfil de usuário se ainda não existir
           try {
             const { error } = await supabase
@@ -51,12 +52,16 @@ function MainComponent() {
           }
           
           setIsAuthenticated(true);
+        } else {
+          console.log('No session found');
+          setIsAuthenticated(false);
         }
 
         // Setup auth state listener
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-          console.log('Auth state changed:', session);
+          console.log('Auth state changed:', { event: _event, session });
           if (session?.user) {
+            console.log('User is now authenticated:', session.user);
             // Criar perfil de usuário se ainda não existir
             try {
               const { error } = await supabase
@@ -73,6 +78,7 @@ function MainComponent() {
             
             setIsAuthenticated(true);
           } else {
+            console.log('User is now unauthenticated');
             setIsAuthenticated(false);
           }
         });
