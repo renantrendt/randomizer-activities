@@ -247,13 +247,19 @@ function MainComponent() {
     setEditingText(category.name);
   };
 
-  const saveEdit = async () => {
+  const saveEdit = async (e) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
     if (editingText.trim()) {
-      await updateCategory({
-        id: editingCategory.id,
-        name: editingText.trim(),
-      });
-      setEditingCategory(null);
+      try {
+        await db.updateCategory(editingCategory.id, editingText.trim());
+        setEditingCategory(null);
+      } catch (error) {
+        console.error('Error updating category:', error);
+        setError('Failed to update category. Please try again.');
+      }
     }
   };
 

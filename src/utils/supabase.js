@@ -129,13 +129,21 @@ export const db = {
     try {
       const user = await supabase.auth.getUser();
       
+      if (!user.data?.user) {
+        throw new Error('User not authenticated');
+      }
+
       console.log('Updating category...');
       const { data, error } = await supabase
         .from('categories')
-        .update({ name })
+        .update({ 
+          name,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
-        .filter('is_public', 'eq', true)
-        .filter('user_id', 'eq', user.data?.user?.id);
+        .eq('user_id', user.data.user.id)
+        .select()
+        .single();
       
       if (error) {
         console.error('Error updating category:', error);
@@ -277,18 +285,22 @@ export const db = {
     try {
       const user = await supabase.auth.getUser();
       
+      if (!user.data?.user) {
+        throw new Error('User not authenticated');
+      }
+      
       console.log('Updating activity...');
       const { data, error } = await supabase
         .from('activities')
         .update({ 
           name: name || '', 
-          url: url || '' 
+          url: url || '',
+          updated_at: new Date().toISOString()
         })
         .eq('id', id)
-        .or([
-          { is_public: { eq: true } },
-          { user_id: { eq: user.data?.user?.id } }
-        ]);
+        .eq('user_id', user.data.user.id)
+        .select()
+        .single();
       
       if (error) {
         console.error('Error updating activity:', error);
