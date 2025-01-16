@@ -17,19 +17,14 @@ export const db = {
       const user = await supabase.auth.getUser();
       
       console.log('Fetching categories...');
-      const query = supabase
+      const userIds = user.data?.user ? [user.data.user.id, null] : [null];
+      console.log('User IDs:', userIds);
+      
+      const { data, error } = await supabase
         .from('categories')
-        .select('*');
-
-      // Se usuário estiver logado, filtrar por user_id e is_public
-      if (user.data?.user) {
-        query.filter('is_public', 'eq', true)
-             .filter('user_id', 'eq', user.data.user.id);
-      }
-      
-      query.order('name');
-      
-      const { data, error } = await query;
+        .select('*')
+        .in('user_id', userIds)
+        .order('name');
 
       if (error) throw error;
       return data;
@@ -174,18 +169,19 @@ export const db = {
       const user = await supabase.auth.getUser();
       
       console.log('Fetching activities...');
+      const userIds = user.data?.user ? [user.data.user.id, null] : [null];
+      console.log('User IDs:', userIds);
+      
       const query = supabase
         .from('activities')
-        .select('*');
+        .select('*')
+        .order('name');
 
-      // Se usuário estiver logado, filtrar por user_id e is_public
+      // Se usuário estiver logado, filtrar por user_id
       if (user.data?.user) {
-        query.filter('is_public', 'eq', true)
-             .filter('user_id', 'eq', user.data.user.id);
+        query.eq('user_id', user.data.user.id);
       }
-      
-      query.order('name');
-      
+
       const { data, error } = await query;
 
       if (error) throw error;
@@ -273,8 +269,7 @@ export const db = {
           url: url || '' 
         })
         .eq('id', id)
-        .filter('is_public', 'eq', true)
-        .filter('user_id', 'eq', user.data?.user?.id);
+        .eq('user_id', user.data?.user?.id);
       
       if (error) {
         console.error('Error updating activity:', error);
@@ -298,8 +293,7 @@ export const db = {
         .from('activities')
         .delete()
         .eq('id', id)
-        .filter('is_public', 'eq', true)
-        .filter('user_id', 'eq', user.data?.user?.id);
+        .eq('user_id', user.data?.user?.id);
       
       if (error) {
         console.error('Error deleting activity:', error);
