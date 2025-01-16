@@ -19,13 +19,15 @@ export const db = {
       console.log('Fetching categories...');
       const query = supabase
         .from('categories')
-        .select('*')
-        .order('name');
+        .select('*');
 
-      // Se usuário estiver logado, filtrar por user_id
+      // Se usuário estiver logado, filtrar por user_id e is_public
       if (user.data?.user) {
-        query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
+        query.filter('is_public', 'eq', true)
+             .filter('user_id', 'eq', user.data.user.id);
       }
+      
+      query.order('name');
       
       const { data, error } = await query;
 
@@ -126,7 +128,8 @@ export const db = {
         .from('categories')
         .update({ name })
         .eq('id', id)
-        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
+        .filter('is_public', 'eq', true)
+        .filter('user_id', 'eq', user.data?.user?.id);
       
       if (error) {
         console.error('Error updating category:', error);
@@ -150,7 +153,8 @@ export const db = {
         .from('categories')
         .delete()
         .eq('id', id)
-        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
+        .filter('is_public', 'eq', true)
+        .filter('user_id', 'eq', user.data?.user?.id);
       
       if (error) {
         console.error('Error deleting category:', error);
@@ -172,13 +176,15 @@ export const db = {
       console.log('Fetching activities...');
       const query = supabase
         .from('activities')
-        .select('*')
-        .order('name');
+        .select('*');
 
-      // Se usuário estiver logado, filtrar por user_id
+      // Se usuário estiver logado, filtrar por user_id e is_public
       if (user.data?.user) {
-        query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
+        query.filter('is_public', 'eq', true)
+             .filter('user_id', 'eq', user.data.user.id);
       }
+      
+      query.order('name');
       
       const { data, error } = await query;
 
@@ -267,7 +273,8 @@ export const db = {
           url: url || '' 
         })
         .eq('id', id)
-        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
+        .filter('is_public', 'eq', true)
+        .filter('user_id', 'eq', user.data?.user?.id);
       
       if (error) {
         console.error('Error updating activity:', error);
@@ -291,7 +298,8 @@ export const db = {
         .from('activities')
         .delete()
         .eq('id', id)
-        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
+        .filter('is_public', 'eq', true)
+        .filter('user_id', 'eq', user.data?.user?.id);
       
       if (error) {
         console.error('Error deleting activity:', error);
