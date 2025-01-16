@@ -16,12 +16,19 @@ export const db = {
     const user = await supabase.auth.getUser();
     
     console.log('Fetching categories...');
-    
-    // Primeiro busca os itens públicos
-    const { data: publicData, error: publicError } = await supabase
+    const query = supabase
       .from('categories')
-      .select('*')
-      .eq('is_public', true);
+      .select('*');
+
+    // Se usuário estiver logado, filtrar por user_id e is_public
+    if (user.data?.user) {
+      query.or([
+        { is_public: { eq: true } },
+        { user_id: { eq: user.data.user.id } }
+      ]);
+    }
+    
+    const { data: publicData, error: publicError } = await query.order('name');
 
     if (publicError) throw publicError;
 
@@ -179,12 +186,19 @@ export const db = {
     const user = await supabase.auth.getUser();
     
     console.log('Fetching activities...');
-    
-    // Primeiro busca os itens públicos
-    const { data: publicData, error: publicError } = await supabase
+    const query = supabase
       .from('activities')
-      .select('*')
-      .eq('is_public', true);
+      .select('*');
+
+    // Se usuário estiver logado, filtrar por user_id e is_public
+    if (user.data?.user) {
+      query.or([
+        { is_public: { eq: true } },
+        { user_id: { eq: user.data.user.id } }
+      ]);
+    }
+    
+    const { data: publicData, error: publicError } = await query.order('name');
 
     if (publicError) throw publicError;
 
@@ -285,7 +299,10 @@ export const db = {
           url: url || '' 
         })
         .eq('id', id)
-        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
+        .or([
+          { is_public: { eq: true } },
+          { user_id: { eq: user.data?.user?.id } }
+        ]);
       
       if (error) {
         console.error('Error updating activity:', error);
@@ -309,7 +326,10 @@ export const db = {
         .from('activities')
         .delete()
         .eq('id', id)
-        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
+        .or([
+          { is_public: { eq: true } },
+          { user_id: { eq: user.data?.user?.id } }
+        ]);
       
       if (error) {
         console.error('Error deleting activity:', error);
