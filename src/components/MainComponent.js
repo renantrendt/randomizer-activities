@@ -254,13 +254,7 @@ function MainComponent() {
     
     if (editingText.trim()) {
       try {
-        const updatedCategory = await db.updateCategory(editingCategory.id, editingText.trim());
-        
-        // Atualiza o estado local das categorias
-        setCategories(categories.map(cat => 
-          cat.id === editingCategory.id ? updatedCategory : cat
-        ));
-        
+        await db.updateCategory(editingCategory.id, editingText.trim());
         setEditingCategory(null);
       } catch (error) {
         console.error('Error updating category:', error);
