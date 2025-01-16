@@ -169,17 +169,14 @@ export const db = {
       const user = await supabase.auth.getUser();
       
       console.log('Fetching activities...');
-      const userIds = user.data?.user ? [user.data.user.id, null] : [null];
-      console.log('User IDs:', userIds);
-      
       const query = supabase
         .from('activities')
         .select('*')
         .order('name');
 
-      // Se usuário estiver logado, filtrar por user_id
+      // Se usuário estiver logado, filtrar por user_id e is_public
       if (user.data?.user) {
-        query.eq('user_id', user.data.user.id);
+        query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
       }
 
       const { data, error } = await query;
@@ -269,7 +266,7 @@ export const db = {
           url: url || '' 
         })
         .eq('id', id)
-        .eq('user_id', user.data?.user?.id);
+        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
       
       if (error) {
         console.error('Error updating activity:', error);
@@ -293,7 +290,7 @@ export const db = {
         .from('activities')
         .delete()
         .eq('id', id)
-        .eq('user_id', user.data?.user?.id);
+        .or(`is_public.eq.true,user_id.eq.${user.data?.user?.id}`);
       
       if (error) {
         console.error('Error deleting activity:', error);
