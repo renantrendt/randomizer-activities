@@ -13,25 +13,36 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export const db = {
   // Categories
   async getCategories() {
-    try {
-      const user = await supabase.auth.getUser();
-      
-      console.log('Fetching categories...');
-      const userIds = user.data?.user ? [user.data.user.id, null] : [null];
-      console.log('User IDs:', userIds);
-      
-      const { data, error } = await supabase
+    const user = await supabase.auth.getUser();
+    
+    console.log('Fetching categories...');
+    
+    // Primeiro busca os itens públicos
+    const { data: publicData, error: publicError } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('is_public', true);
+
+    if (publicError) throw publicError;
+
+    // Se usuário estiver logado, busca também os itens dele
+    let userData = [];
+    if (user.data?.user) {
+      const { data: userItems, error: userError } = await supabase
         .from('categories')
         .select('*')
-        .in('user_id', userIds)
-        .order('name');
-
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.error('Error in getCategories:', err);
-      throw err;
+        .eq('user_id', user.data.user.id);
+      
+      if (userError) throw userError;
+      userData = userItems;
     }
+
+    // Combina os resultados e ordena
+    const allData = [...publicData, ...userData].sort((a, b) => 
+      a.name.localeCompare(b.name)
+    );
+
+    return allData;
   },
 
   async createCategory(name) {
@@ -165,28 +176,36 @@ export const db = {
 
   // Activities
   async getActivities() {
-    try {
-      const user = await supabase.auth.getUser();
-      
-      console.log('Fetching activities...');
-      const query = supabase
+    const user = await supabase.auth.getUser();
+    
+    console.log('Fetching activities...');
+    
+    // Primeiro busca os itens públicos
+    const { data: publicData, error: publicError } = await supabase
+      .from('activities')
+      .select('*')
+      .eq('is_public', true);
+
+    if (publicError) throw publicError;
+
+    // Se usuário estiver logado, busca também os itens dele
+    let userData = [];
+    if (user.data?.user) {
+      const { data: userItems, error: userError } = await supabase
         .from('activities')
         .select('*')
-        .order('name');
-
-      // Se usuário estiver logado, filtrar por user_id e is_public
-      if (user.data?.user) {
-        query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data;
-    } catch (err) {
-      console.error('Error in getActivities:', err);
-      throw err;
+        .eq('user_id', user.data.user.id);
+      
+      if (userError) throw userError;
+      userData = userItems;
     }
+
+    // Combina os resultados e ordena
+    const allData = [...publicData, ...userData].sort((a, b) => 
+      a.name.localeCompare(b.name)
+    );
+
+    return allData;
   },
 
   async createActivity({ name, url, category_id }) {
