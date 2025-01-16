@@ -86,7 +86,7 @@ function MainComponent() {
     checkAuth();
   }, []);
 
-  // Load initial data when component mounts
+  // Load initial data when component mounts or auth state changes
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -107,7 +107,7 @@ function MainComponent() {
       }
     };
     loadData();
-  }, []);
+  }, [isAuthenticated]);
 
   const createCategory = async (data) => {
     setLoading(true);
