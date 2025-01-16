@@ -17,47 +17,23 @@ export const db = {
     console.log('Current user:', user);
     
     console.log('Fetching categories...');
-    const query = supabase
+    let query = supabase
       .from('categories')
       .select('*');
 
-    // Se usuário estiver logado, filtrar por user_id e is_public
     if (user.data?.user) {
-      console.log('User is logged in, adding OR conditions');
-      query.or([
-        { is_public: { eq: true } },
-        { user_id: { eq: user.data.user.id } }
-      ]);
+      // Se logado, busca itens públicos OU do usuário
+      query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
     } else {
-      console.log('User is not logged in, only fetching public items');
-      query.eq('is_public', true);
+      // Se não logado, busca apenas itens públicos
+      query = query.eq('is_public', true);
     }
     
-    query.order('name');
-    
-    const { data, error } = await query;
+    const { data, error } = await query.order('name');
     console.log('Categories query result:', { data, error });
     
     if (error) throw error;
-
-    // Se usuário estiver logado, busca também os itens dele
-    let userData = [];
-    if (user.data?.user) {
-      const { data: userItems, error: userError } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('user_id', user.data.user.id);
-      
-      if (userError) throw userError;
-      userData = userItems;
-    }
-
-    // Combina os resultados e ordena
-    const allData = [...data, ...userData].sort((a, b) => 
-      a.name.localeCompare(b.name)
-    );
-
-    return allData;
+    return data || [];
   },
 
   async createCategory(name) {
@@ -195,47 +171,23 @@ export const db = {
     console.log('Current user:', user);
     
     console.log('Fetching activities...');
-    const query = supabase
+    let query = supabase
       .from('activities')
       .select('*');
 
-    // Se usuário estiver logado, filtrar por user_id e is_public
     if (user.data?.user) {
-      console.log('User is logged in, adding OR conditions');
-      query.or([
-        { is_public: { eq: true } },
-        { user_id: { eq: user.data.user.id } }
-      ]);
+      // Se logado, busca itens públicos OU do usuário
+      query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
     } else {
-      console.log('User is not logged in, only fetching public items');
-      query.eq('is_public', true);
+      // Se não logado, busca apenas itens públicos
+      query = query.eq('is_public', true);
     }
     
-    query.order('name');
-    
-    const { data, error } = await query;
+    const { data, error } = await query.order('name');
     console.log('Activities query result:', { data, error });
     
     if (error) throw error;
-
-    // Se usuário estiver logado, busca também os itens dele
-    let userData = [];
-    if (user.data?.user) {
-      const { data: userItems, error: userError } = await supabase
-        .from('activities')
-        .select('*')
-        .eq('user_id', user.data.user.id);
-      
-      if (userError) throw userError;
-      userData = userItems;
-    }
-
-    // Combina os resultados e ordena
-    const allData = [...data, ...userData].sort((a, b) => 
-      a.name.localeCompare(b.name)
-    );
-
-    return allData;
+    return data || [];
   },
 
   async createActivity({ name, url, category_id }) {
