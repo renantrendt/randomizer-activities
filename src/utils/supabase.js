@@ -15,33 +15,41 @@ export const db = {
   async getCategories() {
     try {
       const user = await supabase.auth.getUser();
-      console.log('Current user:', user);
       
-      console.log('Fetching categories...');
       let query = supabase
         .from('categories')
-        .select();
+        .select(`
+          *,
+          hidden_categories!inner (
+            category_id
+          )
+        `);
 
-      // Se não há usuário, busca apenas públicos
-      if (!user.data?.user) {
-        query = query.eq('is_public', true);
+      if (user.data?.user) {
+        // Se o usuário está logado, mostra:
+        // 1. Categorias públicas que não estão escondidas
+        // 2. Categorias do próprio usuário
+        query = query
+          .or(`is_public.eq.true,user_id.eq.${user.data.user.id}`)
+          .is('hidden_categories.category_id', null);
       } else {
-        // Se há usuário, busca públicos ou do usuário
-        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
+        // Se não está logado, mostra apenas categorias públicas
+        query = query
+          .eq('is_public', true)
+          .is('hidden_categories.category_id', null);
       }
-      
-      const { data, error } = await query.order('name');
-      
+
+      const { data, error } = await query;
+
       if (error) {
         console.error('Error fetching categories:', error);
         throw error;
       }
 
-      console.log('Categories fetched successfully:', data);
       return data || [];
-    } catch (error) {
-      console.error('Error in getCategories:', error);
-      throw error;
+    } catch (err) {
+      console.error('Error in getCategories:', err);
+      throw err;
     }
   },
 
@@ -162,20 +170,53 @@ export const db = {
     try {
       const user = await supabase.auth.getUser();
       
-      console.log('Deleting category...');
-      const { error } = await supabase
+      if (!user.data?.user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Primeiro verifica se a categoria é do usuário
+      const { data: category } = await supabase
         .from('categories')
-        .delete()
+        .select('user_id, is_public')
         .eq('id', id)
-        .filter('is_public', 'eq', true)
-        .filter('user_id', 'eq', user.data?.user?.id);
+        .single();
+
+      if (!category) {
+        throw new Error('Category not found');
+      }
+
+      console.log('Deleting category...');
       
-      if (error) {
-        console.error('Error deleting category:', error);
-        throw error;
+      if (category.user_id === user.data.user.id) {
+        // Se a categoria é do usuário, deleta ela
+        const { error } = await supabase
+          .from('categories')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.data.user.id);
+          
+        if (error) {
+          console.error('Error deleting category:', error);
+          throw error;
+        }
+      } else if (category.is_public) {
+        // Se a categoria é pública, apenas esconde ela para o usuário
+        const { error } = await supabase
+          .from('hidden_categories')
+          .insert({ 
+            category_id: id, 
+            user_id: user.data.user.id 
+          });
+          
+        if (error) {
+          console.error('Error hiding category:', error);
+          throw error;
+        }
+      } else {
+        throw new Error('Cannot delete this category');
       }
       
-      console.log('Category deleted successfully');
+      console.log('Category handled successfully');
     } catch (err) {
       console.error('Error in deleteCategory:', err);
       throw err;
