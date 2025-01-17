@@ -256,6 +256,10 @@ function MainComponent() {
       try {
         await db.updateCategory(editingCategory.id, editingText.trim());
         setEditingCategory(null);
+        
+        // Recarrega todas as categorias
+        const updatedCategories = await db.getCategories();
+        setCategories(updatedCategories);
       } catch (error) {
         console.error('Error updating category:', error);
         setError('Failed to update category. Please try again.');
