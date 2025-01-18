@@ -212,25 +212,46 @@ function MainComponent() {
     setLoading(true);
     setError(null);
     try {
-      if (!data.category_id) {
-        throw new Error('Category ID is required');
-      }
-      
-      const activityData = {
+      console.log("Creating activity:", data);
+      const newActivity = await db.createActivity({
         name: data.name,
         url: data.url,
-        category_id: data.category_id
-      };
-      
-      console.log("Creating activity:", activityData);
-      const newActivity = await db.createActivity(activityData);
+        category_id: selectedCategory.id
+      });
       const updatedActivities = [...activities, newActivity];
-      console.log("Activity created:", newActivity);
       setActivities(updatedActivities);
       return newActivity;
     } catch (err) {
-  git add .
-  git commit -m "Resolve merge conflicts"  };
+      console.error("Error creating activity:", err);
+      setError("Failed to create activity. Please try again.");
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateActivity = async (data) => {
+    setLoading(true);
+    setError(null);
+    try {
+      console.log("Updating activity:", data);
+      const updatedActivity = await db.updateActivity({
+        id: data.id,
+        name: data.name,
+        url: data.url
+      });
+      const updatedActivities = activities.map((act) =>
+        act.id === data.id ? updatedActivity : act
+      );
+      console.log("Activity updated");
+      setActivities(updatedActivities);
+    } catch (err) {
+      console.error("Error updating activity:", err);
+      setError("Failed to update activity. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const deleteActivity = async (data) => {
     setLoading(true);
