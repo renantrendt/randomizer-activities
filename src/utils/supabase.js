@@ -14,7 +14,6 @@ export const db = {
   // Categories
   async getCategories() {
     try {
-<<<<<<< HEAD
       const { data: { user } } = await supabase.auth.getUser();
       console.log('Current user:', user);
       
@@ -27,25 +26,7 @@ export const db = {
         // Se não está logado, mostrar apenas categorias públicas
         query = query.eq('is_public', true);
       }
-
-=======
-      const user = await supabase.auth.getUser();
-      console.log('Current user:', user);
       
-      console.log('Fetching categories...');
-      let query = supabase
-        .from('categories')
-        .select();
-
-      // Se não há usuário, busca apenas públicos
-      if (!user.data?.user) {
-        query = query.eq('is_public', true);
-      } else {
-        // Se há usuário, busca públicos ou do usuário
-        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
-      }
-      
->>>>>>> good
       const { data, error } = await query.order('name');
       
       if (error) {
@@ -53,18 +34,11 @@ export const db = {
         return [];
       }
 
-<<<<<<< HEAD
-      return data || [];
-    } catch (err) {
-      console.error('Error in getCategories:', err);
-      return [];
-=======
       console.log('Categories fetched successfully:', data);
       return data || [];
     } catch (error) {
       console.error('Error in getCategories:', error);
       throw error;
->>>>>>> good
     }
   },
 
@@ -164,14 +138,7 @@ export const db = {
           updated_at: new Date().toISOString()
         })
         .eq('id', id)
-<<<<<<< HEAD
-        .or([
-          { user_id: null },
-          { user_id: user.data?.user?.id }
-        ])
-=======
         .eq('user_id', user.data.user.id)
->>>>>>> good
         .select()
         .single();
       
@@ -197,15 +164,7 @@ export const db = {
         .from('categories')
         .delete()
         .eq('id', id)
-<<<<<<< HEAD
-        .or([
-          { user_id: null },
-          { user_id: user.data?.user?.id }
-        ]);
-=======
-        .filter('is_public', 'eq', true)
-        .filter('user_id', 'eq', user.data?.user?.id);
->>>>>>> good
+        .eq('user_id', user.data?.user?.id);
       
       if (error) {
         console.error('Error deleting category:', error);
@@ -283,48 +242,12 @@ export const db = {
   // Activities
   async getActivities() {
     try {
-<<<<<<< HEAD
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-=======
       const user = await supabase.auth.getUser();
       console.log('Current user:', user);
->>>>>>> good
       
       console.log('Fetching activities...');
       let query = supabase
         .from('activities')
-<<<<<<< HEAD
-        .select(`
-          *,
-          categories!inner (
-            id,
-            is_public
-          )
-        `)
-        .order('name');
-
-      if (user) {
-        // Se usuário está logado:
-        // - Pegar atividades de categorias públicas
-        // - Mais as atividades de categorias do usuário
-        // - Menos as atividades de categorias que o usuário escondeu
-        query = query.or(`categories.is_public.eq.true,user_id.eq.${user.id}`);
-        
-        // Buscar categorias ocultas do usuário
-        const { data: hiddenCategories } = await supabase
-          .from('hidden_categories')
-          .select('category_id')
-          .eq('user_id', user.id);
-        
-        // Excluir atividades de categorias ocultas
-        if (hiddenCategories?.length > 0) {
-          const hiddenIds = hiddenCategories.map(h => h.category_id);
-          query = query.not('category_id', 'in', `(${hiddenIds.join(',')})`);
-        }
-      } else {
-        // Se usuário não está logado, mostrar apenas atividades de categorias públicas
-        query = query.eq('categories.is_public', true);
-=======
         .select();
 
       // Se não há usuário, busca apenas públicos
@@ -333,7 +256,6 @@ export const db = {
       } else {
         // Se há usuário, busca públicos ou do usuário
         query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
->>>>>>> good
       }
       
       const { data, error } = await query.order('name');

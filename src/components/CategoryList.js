@@ -4,20 +4,23 @@ import { FaPencilAlt, FaTrash } from 'react-icons/fa';
 
 function CategoryList({ 
   categories, 
-  newCategory, 
-  setNewCategory, 
-  addCategory, 
-  handleCategoryKeyPress,
+  onEdit, 
+  onDelete, 
+  onHide, 
+  isAuthenticated,
   editingCategory,
-  editingText,
-  setEditingText,
-  handleEditKeyPress,
-  saveEdit,
   startEditing,
   handleDeleteCategory,
-  showCategoryActivities,
-  isAuthenticated,
-  onHideCategory
+  handleHideCategory,
+  editingText,
+  setEditingText,
+  saveEdit,
+  handleEditKeyPress,
+  newCategory,
+  setNewCategory,
+  addCategory,
+  handleCategoryKeyPress,
+  showCategoryActivities
 }) {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
@@ -137,7 +140,7 @@ function CategoryList({
                         }}
                         className="text-blue-500 hover:text-blue-600"
                       >
-                        <FaPencilAlt size={16} />
+                        <FaPencilAlt />
                       </button>
                       <button
                         onClick={(e) => {
@@ -146,12 +149,12 @@ function CategoryList({
                         }}
                         className="text-red-500 hover:text-red-600"
                       >
-                        <FaTrash size={16} />
+                        <FaTrash />
                       </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onHideCategory(category);
+                          handleHideCategory(category);
                         }}
                         className="text-gray-500 hover:text-gray-600"
                       >

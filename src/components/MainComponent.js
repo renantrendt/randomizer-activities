@@ -33,7 +33,6 @@ function MainComponent() {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-<<<<<<< HEAD
         console.log('Current session:', session);
         setIsAuthenticated(!!session?.user);
 
@@ -41,56 +40,6 @@ function MainComponent() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
           console.log('Auth state changed:', session);
           setIsAuthenticated(!!session?.user);
-=======
-        console.log('Initial session check:', session);
-        
-        if (session?.user) {
-          console.log('User is authenticated:', session.user);
-          // Criar perfil de usuário se ainda não existir
-          try {
-            const { error } = await supabase
-              .from('users')
-              .insert([{ id: session.user.id }])
-              .single();
-
-            if (error && error.code !== '23505') { // Ignora erro de duplicação
-              console.error('Error creating user profile:', error);
-            }
-          } catch (err) {
-            console.error('Error creating user profile:', err);
-          }
-          
-          setIsAuthenticated(true);
-        } else {
-          console.log('No session found');
-          setIsAuthenticated(false);
-        }
-
-        // Setup auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-          console.log('Auth state changed:', { event: _event, session });
-          if (session?.user) {
-            console.log('User is now authenticated:', session.user);
-            // Criar perfil de usuário se ainda não existir
-            try {
-              const { error } = await supabase
-                .from('users')
-                .insert([{ id: session.user.id }])
-                .single();
-
-              if (error && error.code !== '23505') { // Ignora erro de duplicação
-                console.error('Error creating user profile:', error);
-              }
-            } catch (err) {
-              console.error('Error creating user profile:', err);
-            }
-            
-            setIsAuthenticated(true);
-          } else {
-            console.log('User is now unauthenticated');
-            setIsAuthenticated(false);
-          }
->>>>>>> good
         });
 
         return () => subscription.unsubscribe();
@@ -103,11 +52,7 @@ function MainComponent() {
     checkAuth();
   }, []);
 
-<<<<<<< HEAD
-  // Separate useEffect for loading data
-=======
   // Load initial data when component mounts or auth state changes
->>>>>>> good
   useEffect(() => {
     const loadData = async () => {
       if (loading) return; // Prevent multiple simultaneous loads
@@ -132,8 +77,7 @@ function MainComponent() {
     };
 
     loadData();
-<<<<<<< HEAD
-  }, [isAuthenticated]); // Reload when auth state changes
+  }, [isAuthenticated]);
 
   const handleHideCategory = async (category) => {
     try {
@@ -164,9 +108,6 @@ function MainComponent() {
       setError('Failed to hide category. Please try again.');
     }
   };
-=======
-  }, [isAuthenticated]);
->>>>>>> good
 
   const createCategory = async (data) => {
     setLoading(true);
