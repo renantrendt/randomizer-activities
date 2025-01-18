@@ -157,9 +157,7 @@ function CategoryList({
                           handleHideCategory(category);
                         }}
                         className="text-gray-500 hover:text-gray-600"
-                      >
-                        Hide
-                      </button>
+                      />
                     </>
                   )}
                 </>
