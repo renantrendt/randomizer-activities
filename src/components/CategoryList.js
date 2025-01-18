@@ -109,8 +109,7 @@ function CategoryList({
                   value={editingText}
                   onChange={(e) => setEditingText(e.target.value)}
                   onKeyPress={handleEditKeyPress}
-                  onBlur={(e) => saveEdit(e)}
-                  className="w-full border p-1 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 border p-1 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   autoFocus
                 />
               ) : (
@@ -124,12 +123,7 @@ function CategoryList({
               {isAuthenticated && (
                 <>
                   {editingCategory?.id === category.id ? (
-                    <button
-                      onClick={() => saveEdit(category.id)}
-                      className="text-green-500 hover:text-green-600"
-                    >
-                      Save
-                    </button>
+                    <></>
                   ) : (
                     <>
                       <button
