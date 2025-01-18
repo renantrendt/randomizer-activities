@@ -33,6 +33,15 @@ function MainComponent() {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
+<<<<<<< HEAD
+        console.log('Current session:', session);
+        setIsAuthenticated(!!session?.user);
+
+        // Setup auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          console.log('Auth state changed:', session);
+          setIsAuthenticated(!!session?.user);
+=======
         console.log('Initial session check:', session);
         
         if (session?.user) {
@@ -81,6 +90,7 @@ function MainComponent() {
             console.log('User is now unauthenticated');
             setIsAuthenticated(false);
           }
+>>>>>>> good
         });
 
         return () => subscription.unsubscribe();
@@ -93,7 +103,11 @@ function MainComponent() {
     checkAuth();
   }, []);
 
+<<<<<<< HEAD
+  // Separate useEffect for loading data
+=======
   // Load initial data when component mounts or auth state changes
+>>>>>>> good
   useEffect(() => {
     const loadData = async () => {
       if (loading) return; // Prevent multiple simultaneous loads
@@ -118,7 +132,8 @@ function MainComponent() {
     };
 
     loadData();
-  }, [isAuthenticated]);
+<<<<<<< HEAD
+  }, [isAuthenticated]); // Reload when auth state changes
 
   const handleHideCategory = async (category) => {
     try {
@@ -149,6 +164,9 @@ function MainComponent() {
       setError('Failed to hide category. Please try again.');
     }
   };
+=======
+  }, [isAuthenticated]);
+>>>>>>> good
 
   const createCategory = async (data) => {
     setLoading(true);
@@ -212,13 +230,20 @@ function MainComponent() {
     setLoading(true);
     setError(null);
     try {
-      console.log("Creating activity:", data);
-      const newActivity = await db.createActivity({
+      if (!data.category_id) {
+        throw new Error('Category ID is required');
+      }
+      
+      const activityData = {
         name: data.name,
         url: data.url,
-        category_id: selectedCategory.id
-      });
+        category_id: data.category_id
+      };
+      
+      console.log("Creating activity:", activityData);
+      const newActivity = await db.createActivity(activityData);
       const updatedActivities = [...activities, newActivity];
+      console.log("Activity created:", newActivity);
       setActivities(updatedActivities);
       return newActivity;
     } catch (err) {

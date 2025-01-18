@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
+import { FaPencilAlt, FaTrash } from 'react-icons/fa';
 
 function CategoryList({ 
   categories, 
@@ -20,6 +21,7 @@ function CategoryList({
 }) {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const [hoveredId, setHoveredId] = useState(null);
 
   useEffect(() => {
     const getUser = async () => {
@@ -92,6 +94,8 @@ function CategoryList({
           <li
             key={category.id}
             className="flex justify-between items-center bg-white shadow-sm border border-gray-200 p-3 rounded-lg hover:shadow-md transition-all duration-200 group cursor-pointer"
+            onMouseEnter={() => setHoveredId(category.id)}
+            onMouseLeave={() => setHoveredId(null)}
           >
             <div 
               className="flex-1" 
@@ -114,7 +118,7 @@ function CategoryList({
                 </div>
               )}
             </div>
-            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className={`flex gap-2 transition-opacity duration-200 ${hoveredId === category.id ? 'opacity-100' : 'opacity-0'}`}>
               {isAuthenticated && (
                 <>
                   {editingCategory?.id === category.id ? (
@@ -133,7 +137,7 @@ function CategoryList({
                         }}
                         className="text-blue-500 hover:text-blue-600"
                       >
-                        Edit
+                        <FaPencilAlt size={16} />
                       </button>
                       <button
                         onClick={(e) => {
@@ -142,7 +146,7 @@ function CategoryList({
                         }}
                         className="text-red-500 hover:text-red-600"
                       >
-                        Delete
+                        <FaTrash size={16} />
                       </button>
                       <button
                         onClick={(e) => {
