@@ -14,19 +14,22 @@ export const db = {
   // Categories
   async getCategories() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await supabase.auth.getUser();
       console.log('Current user:', user);
       
-      let query = supabase.from('categories').select('*');
+      console.log('Fetching categories...');
+      let query = supabase
+        .from('categories')
+        .select();
 
-      if (user) {
-        // Se usuário está logado, buscar categorias públicas e do usuário
-        query = query.or(`is_public.eq.true,user_id.eq.${user.id}`);
-      } else {
-        // Se não está logado, mostrar apenas categorias públicas
+      // Se não há usuário, busca apenas públicos
+      if (!user.data?.user) {
         query = query.eq('is_public', true);
+      } else {
+        // Se há usuário, busca públicos ou do usuário
+        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
       }
-
+      
       const { data, error } = await query.order('name');
       
       if (error) {
@@ -34,10 +37,11 @@ export const db = {
         return [];
       }
 
+      console.log('Categories fetched successfully:', data);
       return data || [];
-    } catch (err) {
-      console.error('Error in getCategories:', err);
-      return [];
+    } catch (error) {
+      console.error('Error in getCategories:', error);
+      throw error;
     }
   },
 
@@ -125,15 +129,19 @@ export const db = {
     try {
       const user = await supabase.auth.getUser();
       
+      if (!user.data?.user) {
+        throw new Error('User not authenticated');
+      }
+
       console.log('Updating category...');
       const { data, error } = await supabase
         .from('categories')
-        .update({ name })
+        .update({ 
+          name,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', id)
-        .or([
-          { user_id: null },
-          { user_id: user.data?.user?.id }
-        ])
+        .eq('user_id', user.data.user.id)
         .select()
         .single();
       
@@ -159,10 +167,8 @@ export const db = {
         .from('categories')
         .delete()
         .eq('id', id)
-        .or([
-          { user_id: null },
-          { user_id: user.data?.user?.id }
-        ]);
+        .filter('is_public', 'eq', true)
+        .filter('user_id', 'eq', user.data?.user?.id);
       
       if (error) {
         console.error('Error deleting category:', error);
@@ -240,55 +246,34 @@ export const db = {
   // Activities
   async getActivities() {
     try {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const user = await supabase.auth.getUser();
+      console.log('Current user:', user);
       
       console.log('Fetching activities...');
       let query = supabase
         .from('activities')
-        .select(`
-          *,
-          categories!inner (
-            id,
-            is_public
-          )
-        `)
-        .order('name');
+        .select();
 
-      if (user) {
-        // Se usuário está logado:
-        // - Pegar atividades de categorias públicas
-        // - Mais as atividades de categorias do usuário
-        // - Menos as atividades de categorias que o usuário escondeu
-        query = query.or(`categories.is_public.eq.true,user_id.eq.${user.id}`);
-        
-        // Buscar categorias ocultas do usuário
-        const { data: hiddenCategories } = await supabase
-          .from('hidden_categories')
-          .select('category_id')
-          .eq('user_id', user.id);
-        
-        // Excluir atividades de categorias ocultas
-        if (hiddenCategories?.length > 0) {
-          const hiddenIds = hiddenCategories.map(h => h.category_id);
-          query = query.not('category_id', 'in', `(${hiddenIds.join(',')})`);
-        }
+      // Se não há usuário, busca apenas públicos
+      if (!user.data?.user) {
+        query = query.eq('is_public', true);
       } else {
-        // Se usuário não está logado, mostrar apenas atividades de categorias públicas
-        query = query.eq('categories.is_public', true);
+        // Se há usuário, busca públicos ou do usuário
+        query = query.or(`is_public.eq.true,user_id.eq.${user.data.user.id}`);
       }
       
-      const { data, error } = await query;
+      const { data, error } = await query.order('name');
       
       if (error) {
         console.error('Error fetching activities:', error);
         throw error;
       }
-      
+
       console.log('Activities fetched successfully:', data);
-      return data;
-    } catch (err) {
-      console.error('Error in getActivities:', err);
-      throw err;
+      return data || [];
+    } catch (error) {
+      console.error('Error in getActivities:', error);
+      throw error;
     }
   },
 
@@ -349,15 +334,20 @@ export const db = {
     try {
       const user = await supabase.auth.getUser();
       
+      if (!user.data?.user) {
+        throw new Error('User not authenticated');
+      }
+      
       console.log('Updating activity...');
       const { data, error } = await supabase
         .from('activities')
         .update({ 
-          name, 
-          url: url || '' 
+          name: name || '', 
+          url: url || '',
+          updated_at: new Date().toISOString()
         })
         .eq('id', id)
-        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`)
+        .eq('user_id', user.data.user.id)
         .select()
         .single();
       
@@ -383,7 +373,10 @@ export const db = {
         .from('activities')
         .delete()
         .eq('id', id)
-        .or(`user_id.is.null,user_id.eq.${user.data?.user?.id}`);
+        .or([
+          { is_public: { eq: true } },
+          { user_id: { eq: user.data?.user?.id } }
+        ]);
       
       if (error) {
         console.error('Error deleting activity:', error);

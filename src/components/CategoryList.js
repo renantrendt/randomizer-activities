@@ -103,7 +103,8 @@ function CategoryList({
                   value={editingText}
                   onChange={(e) => setEditingText(e.target.value)}
                   onKeyPress={handleEditKeyPress}
-                  className="w-full p-1 border rounded"
+                  onBlur={(e) => saveEdit(e)}
+                  className="w-full border p-1 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   autoFocus
                 />
               ) : (

@@ -33,13 +33,54 @@ function MainComponent() {
     const checkAuth = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        console.log('Current session:', session);
-        setIsAuthenticated(!!session?.user);
+        console.log('Initial session check:', session);
+        
+        if (session?.user) {
+          console.log('User is authenticated:', session.user);
+          // Criar perfil de usuário se ainda não existir
+          try {
+            const { error } = await supabase
+              .from('users')
+              .insert([{ id: session.user.id }])
+              .single();
+
+            if (error && error.code !== '23505') { // Ignora erro de duplicação
+              console.error('Error creating user profile:', error);
+            }
+          } catch (err) {
+            console.error('Error creating user profile:', err);
+          }
+          
+          setIsAuthenticated(true);
+        } else {
+          console.log('No session found');
+          setIsAuthenticated(false);
+        }
 
         // Setup auth state listener
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-          console.log('Auth state changed:', session);
-          setIsAuthenticated(!!session?.user);
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+          console.log('Auth state changed:', { event: _event, session });
+          if (session?.user) {
+            console.log('User is now authenticated:', session.user);
+            // Criar perfil de usuário se ainda não existir
+            try {
+              const { error } = await supabase
+                .from('users')
+                .insert([{ id: session.user.id }])
+                .single();
+
+              if (error && error.code !== '23505') { // Ignora erro de duplicação
+                console.error('Error creating user profile:', error);
+              }
+            } catch (err) {
+              console.error('Error creating user profile:', err);
+            }
+            
+            setIsAuthenticated(true);
+          } else {
+            console.log('User is now unauthenticated');
+            setIsAuthenticated(false);
+          }
         });
 
         return () => subscription.unsubscribe();
@@ -52,7 +93,7 @@ function MainComponent() {
     checkAuth();
   }, []);
 
-  // Separate useEffect for loading data
+  // Load initial data when component mounts or auth state changes
   useEffect(() => {
     const loadData = async () => {
       if (loading) return; // Prevent multiple simultaneous loads
@@ -77,7 +118,7 @@ function MainComponent() {
     };
 
     loadData();
-  }, [isAuthenticated]); // Reload when auth state changes
+  }, [isAuthenticated]);
 
   const handleHideCategory = async (category) => {
     try {
@@ -188,36 +229,8 @@ function MainComponent() {
       setActivities(updatedActivities);
       return newActivity;
     } catch (err) {
-      console.error("Error creating activity:", err);
-      setError("Failed to create activity. Please try again.");
-      return null;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateActivity = async (data) => {
-    setLoading(true);
-    setError(null);
-    try {
-      console.log("Updating activity:", data);
-      const updatedActivity = await db.updateActivity({
-        id: data.id,
-        name: data.name,
-        url: data.url
-      });
-      const updatedActivities = activities.map((act) =>
-        act.id === data.id ? updatedActivity : act
-      );
-      console.log("Activity updated");
-      setActivities(updatedActivities);
-    } catch (err) {
-      console.error("Error updating activity:", err);
-      setError("Failed to update activity. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  git add .
+  git commit -m "Resolve merge conflicts"  };
 
   const deleteActivity = async (data) => {
     setLoading(true);
@@ -241,13 +254,23 @@ function MainComponent() {
     setEditingText(category.name);
   };
 
-  const saveEdit = async () => {
+  const saveEdit = async (e) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
     if (editingText.trim()) {
-      await updateCategory({
-        id: editingCategory.id,
-        name: editingText.trim(),
-      });
-      setEditingCategory(null);
+      try {
+        await db.updateCategory(editingCategory.id, editingText.trim());
+        setEditingCategory(null);
+        
+        // Recarrega todas as categorias
+        const updatedCategories = await db.getCategories();
+        setCategories(updatedCategories);
+      } catch (error) {
+        console.error('Error updating category:', error);
+        setError('Failed to update category. Please try again.');
+      }
     }
   };
 
