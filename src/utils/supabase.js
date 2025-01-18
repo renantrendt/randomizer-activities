@@ -369,10 +369,7 @@ export const db = {
         .from('activities')
         .delete()
         .eq('id', id)
-        .or([
-          { is_public: { eq: true } },
-          { user_id: { eq: user.data?.user?.id } }
-        ]);
+        .eq('user_id', user.data?.user?.id);
       
       if (error) {
         console.error('Error deleting activity:', error);

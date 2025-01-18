@@ -46,7 +46,9 @@ const ActivityList = ({
       {isAuthenticated && showAddActivity && selectedCategory && (
         <>
           {error && (
-            <div className="text-red-500 mb-2">{error}</div>
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4">
+              {error}
+            </div>
           )}
           <div className="space-y-2 mb-4">
             <input

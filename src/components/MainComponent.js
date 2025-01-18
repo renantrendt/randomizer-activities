@@ -224,13 +224,16 @@ function MainComponent() {
     setError(null);
     try {
       console.log("Deleting activity:", data);
+      if (!isAuthenticated) {
+        throw new Error("You must be logged in to delete activities");
+      }
       await db.deleteActivity(data.id);
       const updatedActivities = activities.filter((act) => act.id !== data.id);
       console.log("Activity deleted");
       setActivities(updatedActivities);
     } catch (err) {
       console.error("Error deleting activity:", err);
-      setError("Failed to delete activity. Please try again.");
+      setError(err.message || "Failed to delete activity. Please try again.");
     } finally {
       setLoading(false);
     }
